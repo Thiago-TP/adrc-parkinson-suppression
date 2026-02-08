@@ -1,0 +1,44 @@
+# Nominal values of model coefficients
+nominal_parameters:
+  # Lengths
+  l1: 0.364 # upper arm
+  l2: 0.299 # forearm
+  l3: 0.203 # palm
+
+  # Centroids coefficients
+  a1: 0.427 # upper arm
+  a2: 0.417 # forearm
+  a3: 0.361 # palm
+
+  # Mass
+  m1: 2.07 # upper arm
+  m2: 1.16 # forearm
+  m3: 0.54 # palm
+
+  # Rotational inertia
+  j1: 0.0228 # upper arm
+  j2: 0.0082 # forearm
+  j3: 0.0012 # palm
+
+  # Rotational stiffness
+  k1: 180 # shoulder
+  k2: 70  # elbow
+  k3: 40  # biceps
+  k4: 10  # wrist
+
+  # Rotational damper coefficients
+  c1: 0.002 # shoulder
+  c2: 0.002 # elbow
+  c3: 0.002 # biceps
+  c4: 0.001 # wrist
+
+# Distribution intervals of key model coefficients
+
+# Initial conditions
+initial_conditions:
+  theta_shoulder: 1
+  theta_elbow: 0
+  theta_wrist: 0
+  theta_shoulder_dot: 0
+  theta_elbow_dot: 0
+  theta_wrist_dot: 0
