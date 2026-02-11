@@ -13,7 +13,6 @@ class OpenLoopModel(Model):
         super().__init__(name, params, ic)
         return
 
-    def control(self, t: float) -> np.ndarray:
-        # No control signal in open loop
-        self.u.append(np.array([0.0, 0.0, 0.0]))
-        return self.u[-1]
+    def control(self) -> np.ndarray:
+        # Null control signal in open loop
+        return np.array([0.0, 0.0, 0.0])

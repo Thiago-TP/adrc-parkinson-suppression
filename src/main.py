@@ -1,6 +1,7 @@
+import yaml
 from model import ModelParameters
 from open_loop import OpenLoopModel
-import yaml
+from plots import Plots
 
 
 def main() -> None:
@@ -16,15 +17,15 @@ def main() -> None:
 
     # Run model in open loop, i.e. no controls
     ol_model = OpenLoopModel("open_loop", nominal_model, ic)
-    ol_model.plot_torque_profiles()
+    ol_model.load_torque_profiles()
     ol_model.time_response()
-    ol_model.plot_time_response()
-    ol_model.estimate_voluntary_time_response()
-    ol_model.simulate_voluntary_time_response()
-    ol_model.plot_voluntary_time_response()
+    ol_model.estimate_voluntary()
+    ol_model.simulate_voluntary()
 
-    ol_model.frequency_response()
-    ol_model.plot_frequency_response()
+    ol_plots = Plots(ol_model)
+    ol_plots.plot_time_response()
+    ol_plots.plot_torque_profiles()
+    ol_plots.plot_voluntary_time_response()
 
 
 if __name__ == "__main__":

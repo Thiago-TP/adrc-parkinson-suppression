@@ -36,9 +36,9 @@ nominal_parameters:
 
 # Initial conditions
 initial_conditions:
-  theta_shoulder: 1
-  theta_elbow: 0
-  theta_wrist: 0
-  theta_shoulder_dot: 0
-  theta_elbow_dot: 0
-  theta_wrist_dot: 0
+  theta_shoulder: 1.0
+  theta_elbow: 0.0
+  theta_wrist: 0.0
+  theta_shoulder_dot: 0.0
+  theta_elbow_dot: 0.0
+  theta_wrist_dot: 0.0
