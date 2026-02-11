@@ -1,9 +1,9 @@
-from model import Model, ModelParameters
+from system import System, ModelParameters
 
 import numpy as np
 
 
-class OpenLoopModel(Model):
+class OpenLoopModel(System):
     def __init__(
         self,
         name: str,

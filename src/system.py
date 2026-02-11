@@ -41,7 +41,7 @@ class ModelParameters:
     c4: float  # wrist
 
 
-class Model(ABC):
+class System(ABC):
     def __init__(
         self,
         name: str,

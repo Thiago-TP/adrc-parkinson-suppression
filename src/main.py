@@ -1,7 +1,7 @@
 import yaml
-from model import ModelParameters
-from open_loop import OpenLoopModel
+from control_strategies import open_loop
 from plots import Plots
+from system import ModelParameters
 
 
 def main() -> None:
@@ -16,7 +16,7 @@ def main() -> None:
     ic = tuple(cfgs["initial_conditions"].values())
 
     # Run model in open loop, i.e. no controls
-    ol_model = OpenLoopModel("open_loop", nominal_model, ic)
+    ol_model = open_loop.OpenLoopModel("open_loop", nominal_model, ic)
     ol_model.load_torque_profiles()
     ol_model.time_response()
     ol_model.estimate_voluntary()
