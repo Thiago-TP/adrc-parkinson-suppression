@@ -63,7 +63,7 @@ class System(ABC):
         # State space matrices
         self.a: np.ndarray | None = None  # state matrix
         self.b: np.ndarray | None = None  # input matrix
-        self.c: np.ndarray | None = None  # output matrix
+        self.c_ss: np.ndarray | None = None  # output matrix
 
         # Torque profiles (voluntary and involuntary)
         self.tau_v: Callable[[float], np.ndarray] | None = None
@@ -120,7 +120,7 @@ class System(ABC):
 
         # Initialization
         x = np.array(self.initial_conditions)
-        theta = [self.c @ x]
+        theta = [self.c_ss @ x]
 
         # 4th order Runge-Kutta with fixed time step
         for t in self.t[:-1]:
@@ -133,7 +133,7 @@ class System(ABC):
 
             # Update state, response
             x += (self.dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
-            theta.append(self.c @ x)
+            theta.append(self.c_ss @ x)
 
         # Cast time response to numpy array
         theta = np.array(theta)
@@ -199,21 +199,21 @@ class System(ABC):
         j32 = j13
         j33 = p.j3 + p.m3 * a3**2
 
-        self.j = np.array([[j11, j12, j13], [j21, j22, j23], [j31, j32, j33]])
-        self.k = np.array(
-            [
-                [p.k1 + p.k3, p.k3, 0],
-                [p.k3, p.k2 + p.k3, 0],
-                [0, 0, p.k4],
-            ]
-        )
-        self.c = np.array(
-            [
-                [c1 + c3, c3, 0],
-                [c3, c2 + c3, 0],
-                [0, 0, c4],
-            ]
-        )
+        self.j = np.array([
+            [j11, j12, j13], 
+            [j21, j22, j23], 
+            [j31, j32, j33]
+        ])
+        self.k = np.array([
+            [p.k1 + p.k3, p.k3, 0],
+            [p.k3, p.k2 + p.k3, 0],
+            [0, 0, p.k4],
+        ])
+        self.c = np.array([
+            [c1 + c3, c3, 0],
+            [c3, c2 + c3, 0],
+            [0, 0, c4],
+        ])
 
     @final
     def _set_state_space(self) -> None:
@@ -230,7 +230,7 @@ class System(ABC):
 
         self.a = np.concatenate((a_num, a_den), axis=0)  # state matrix
         self.b = np.concatenate((null, inv_j), axis=0)  # input matrix
-        self.c = np.concatenate((iden, null), axis=1)  # output matrix
+        self.c_ss = np.concatenate((iden, null), axis=1)  # output matrix
 
     @abstractmethod
     def control(self, t: float) -> np.ndarray:
