@@ -220,7 +220,7 @@ class System(ABC):
         # Define matrices for the state-space representation of the system
         null = np.zeros((3, 3))  # Zero matrix
         iden = np.identity(3)  # Identity matrix
-        inv_j = scipy.linalg.inv(self.j)  # Inverse of the mass matrix
+        inv_j = np.linalg.inv(self.j)  # Inverse of the mass matrix
 
         k_hat = -inv_j @ self.k
         c_hat = -inv_j @ self.c
