@@ -1,5 +1,5 @@
 import yaml
-from control_strategies import open_loop
+from control_strategies import open_loop, pid
 from plots import Plots
 from system import ModelParameters
 
@@ -15,17 +15,20 @@ def main() -> None:
     # Load initial conditions
     ic = tuple(cfgs["initial_conditions"].values())
 
-    # Run model in open loop, i.e. no controls
-    ol_model = open_loop.OpenLoopModel("open_loop", nominal_model, ic)
-    ol_model.load_torque_profiles()
-    ol_model.time_response()
-    ol_model.estimate_voluntary()
-    ol_model.simulate_voluntary()
+    # Run model with different control strategies
+    ol = open_loop.OpenLoopControl("open_loop", nominal_model, ic)
+    erm = pid.PIDControl("pid", nominal_model, ic)
 
-    ol_plots = Plots(ol_model)
-    ol_plots.plot_time_response()
-    ol_plots.plot_torque_profiles()
-    ol_plots.plot_voluntary_time_response()
+    for control in [ol, erm]:
+        control.load_torque_profiles()
+        control.simulate_system()
+        control.estimate_voluntary()
+
+        plots = Plots(control)
+        plots.plot_time_response()
+        plots.plot_torque_profiles()
+        plots.plot_voluntary_time_response()
+        plots.plot_control()
 
 
 if __name__ == "__main__":

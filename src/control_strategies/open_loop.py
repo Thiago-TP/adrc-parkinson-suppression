@@ -1,9 +1,8 @@
+import numpy as np
 from system import System, ModelParameters
 
-import numpy as np
 
-
-class OpenLoopModel(System):
+class OpenLoopControl(System):
     def __init__(
         self,
         name: str,
@@ -15,4 +14,6 @@ class OpenLoopModel(System):
 
     def control(self) -> np.ndarray:
         # Null control signal in open loop
-        return np.array([0.0, 0.0, 0.0])
+        control = np.array([0.0, 0.0, 0.0])
+        self.u.append(control) # register control signal to history
+        return self.u[-1]

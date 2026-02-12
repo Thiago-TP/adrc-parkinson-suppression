@@ -87,6 +87,7 @@ class Plots:
     def plot_voluntary_time_response(self, save_results: bool = True):
         # Plot actual and estimated voluntary time response
 
+        plt.figure()
         fig, axs = plt.subplots(
             nrows=5, ncols=1, sharex=True, sharey=True, figsize=(8, 15))
         fig.suptitle("Upper Limb Time response")
@@ -140,3 +141,24 @@ class Plots:
                 bbox_inches="tight",
             )
         plt.close()
+
+    def plot_control(self, save_results: bool = True) -> None:
+        # Plot control signal applied to wrist joint
+
+        plt.figure()
+        plt.plot(self.s.t, self.s.u[:, 2], color="tab:green")
+        plt.title("Control torque applied at wrist joint")
+        plt.ylabel("$u_3$ [Nm]")
+        plt.xlim(*self.xlim)
+        plt.grid()
+
+        plt.xlabel("Time [s]")
+
+        if save_results:
+            plt.savefig(
+                f"results/control_{self.s.name}.pdf",
+                pad_inches=0.1,
+                bbox_inches="tight",
+            )
+        plt.close()
+

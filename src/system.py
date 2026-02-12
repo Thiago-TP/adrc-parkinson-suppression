@@ -70,7 +70,7 @@ class System(ABC):
         self.tau_i: Callable[[float], np.ndarray] | None = None
 
         # Control signal history
-        self.u: list[np.ndarray] = []
+        self.u: list[np.ndarray] = [np.array([0.0, 0.0, 0.0])]
 
         # Time response
         self.theta: np.ndarray | None = None
@@ -107,45 +107,51 @@ class System(ABC):
         )
         return
 
-    def _simulate_system(
-            self, voluntary_only: bool) -> np.ndarray:
-        # Input (applied torque)
-        if voluntary_only:
-            def m(t): return self.tau_v(t)
-        else:
-            def m(t): return self.tau_v(t) + self.tau_i(t) + self.control()
+    def simulate_system(self) -> None:
+
+        # print(self.a)
+        # print(x)
+        # print(self.initial_conditions)
 
         # State dynamics
-        def f(t, x): return self.a @ x + self.b @ m(t)
+        def f_vol(t, x): return self.a @ x + self.b @ self.tau_v(t)
+        def f_all(t, x, u): return f_vol(t, x) + self.b @ (self.tau_i(t) + u)
 
         # Initialization
         x = np.array(self.initial_conditions)
-        theta = [self.c_ss @ x]
+        x_v = np.array(self.initial_conditions)
+        self.theta = [self.c_ss @ x]
+        self.theta_v = [self.c_ss @ x_v]
 
         # 4th order Runge-Kutta with fixed time step
         for t in self.t[:-1]:
+            u = self.control() # implicitly updates self.u
 
-            # Update k1 through k4
-            k1 = f(t, x)
-            k2 = f(t + (self.dt / 2), x + (self.dt * k1 / 2))
-            k3 = f(t + (self.dt / 2), x + (self.dt * k2 / 2))
-            k4 = f(t + (self.dt), x + (self.dt * k3))
+            # Update k1 through k4 (Measured response)
+            k1 = f_all(t, x, u)
+            k2 = f_all(t + (self.dt / 2), x + (self.dt * k1 / 2), u)
+            k3 = f_all(t + (self.dt / 2), x + (self.dt * k2 / 2), u)
+            k4 = f_all(t + (self.dt), x + (self.dt * k3), u)
 
             # Update state, response
-            x += (self.dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
-            theta.append(self.c_ss @ x)
+            x += (self.dt / 6) * (k1 + (2 * k2) + (2 * k3) + k4)
+            self.theta.append(self.c_ss @ x)
 
-        # Cast time response to numpy array
-        theta = np.array(theta)
-        return theta
+            # Update k1 through k4 (Voluntary trajectory)
+            k1 = f_vol(t, x_v)
+            k2 = f_vol(t + (self.dt / 2), x_v + (self.dt * k1 / 2))
+            k3 = f_vol(t + (self.dt / 2), x_v + (self.dt * k2 / 2))
+            k4 = f_vol(t + (self.dt), x_v + (self.dt * k3))
 
-    def time_response(self) -> None:
-        self.theta = self._simulate_system(voluntary_only=False)
+            # Update state, response
+            x_v += (self.dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
+            self.theta_v.append(self.c_ss @ x_v)
 
-    def simulate_voluntary(self):
-        # Simulate voluntary time response by
-        # running system with only voluntary torque
-        self.theta_v = self._simulate_system(voluntary_only=True)
+        # Cast to numpy array
+        self.theta = np.array(self.theta)
+        self.theta_v = np.array(self.theta_v)
+        self.u = np.array(self.u)
+        return
 
     def estimate_voluntary(
             self, f_cutoff: float = 1.0):
@@ -232,10 +238,11 @@ class System(ABC):
         self.b = np.concatenate((null, inv_j), axis=0)  # input matrix
         self.c_ss = np.concatenate((iden, null), axis=1)  # output matrix
 
+    @final
+    def add_noise(self):
+        pass
+    
     @abstractmethod
     def control(self, t: float) -> np.ndarray:
         pass
 
-    @final
-    def add_noise(self):
-        pass
