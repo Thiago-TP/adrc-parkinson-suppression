@@ -1,5 +1,5 @@
 import yaml
-from control_strategies import open_loop, pid
+from control_strategies import open_loop, pid, adrc
 from plots import Plots
 from system import ModelParameters
 
@@ -17,12 +17,16 @@ def main() -> None:
 
     # Run model with different control strategies
     ol = open_loop.OpenLoopControl("open_loop", nominal_model, ic)
-    erm = pid.PIDControl("pid", nominal_model, ic)
+    pidc = pid.PIDControl("pid", nominal_model, ic)
+    adr = adrc.ADRControl("adrc", nominal_model, ic)
 
-    for control in [ol, erm]:
+    for control in [
+        ol, 
+        pidc, 
+        adr,
+    ]:
         control.load_torque_profiles()
         control.simulate_system()
-        control.estimate_voluntary()
 
         plots = Plots(control)
         plots.plot_time_response()

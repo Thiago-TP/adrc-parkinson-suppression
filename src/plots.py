@@ -5,9 +5,12 @@ from system import System
 
 class Plots:
 
-    def __init__(self, system: System, xlim: tuple[float, float] = (0, 5)):
+    def __init__(self, system: System, 
+                 xlim: tuple[float, float] = (0, 5), 
+                 ylim: tuple[float, float] = (-100, 100)):
         self.s = system
         self.xlim = xlim
+        self.ylim = ylim
 
     def plot_torque_profiles(self, save_results: bool = True):
         tau_v = np.array([self.s.tau_v(t) for t in self.s.t])
@@ -59,6 +62,7 @@ class Plots:
         axs[0].set_ylabel("$\\theta$ [˚]")
         axs[0].set_xlabel("")
         axs[0].set_xlim(*self.xlim)
+        axs[0].set_ylim(*self.ylim)
         axs[0].legend()
         axs[0].grid()
 
@@ -66,6 +70,7 @@ class Plots:
         axs[1].set_ylabel("$\\theta$ [˚]")
         axs[1].set_xlabel("")
         axs[1].set_xlim(*self.xlim)
+        axs[1].set_ylim(*self.ylim)
         axs[1].legend()
         axs[1].grid()
 
@@ -73,6 +78,7 @@ class Plots:
         axs[2].set_ylabel("$\\theta$ [˚]")
         axs[2].set_xlabel("Time [s]")
         axs[2].set_xlim(*self.xlim)
+        axs[2].set_ylim(*self.ylim)
         axs[2].legend()
         axs[2].grid()
 
@@ -100,16 +106,21 @@ class Plots:
         axs[0].set_ylabel("$\\theta_v$ [˚]")
         axs[0].set_xlabel("")
         axs[0].set_xlim(*self.xlim)
+        axs[0].set_ylim(*self.ylim)
         axs[0].legend()
         axs[0].grid()
 
         # Estimation from low-pass filtering
         theta_v_hat = self.s.theta_v_hat * 180 / np.pi  # radians to degrees
+        ax_alpha = axs[1].twinx()
+        ax_alpha.plot(self.s.t, self.s.alpha, alpha=0.5, color="yellow")
+        ax_alpha.set_ylabel("$\\alpha_t$")
         axs[1].plot(self.s.t, theta_v_hat, "--")
         axs[1].set_title("Estimated Voluntary (Low-pass filtered)")
         axs[1].set_ylabel("$\\hat{\\theta}_v$ [˚]")
         axs[1].set_xlabel("")
         axs[1].set_xlim(*self.xlim)
+        axs[1].set_ylim(*self.ylim)
         axs[1].grid()
 
         # Errors
@@ -118,18 +129,21 @@ class Plots:
         axs[2].set_title("Errors")
         axs[2].set_ylabel("$\\theta_v-\\hat{\\theta}_v$ [˚]")
         axs[2].set_xlim(*self.xlim)
+        axs[2].set_ylim(*self.ylim)
         axs[2].grid()
 
         axs[3].plot(self.s.t, error[:, 1], color="tab:orange")
         axs[3].set_title("")
         axs[3].set_ylabel("$\\theta_v-\\hat{\\theta}_v$ [˚]")
         axs[3].set_xlim(*self.xlim)
+        axs[3].set_ylim(*self.ylim)
         axs[3].grid()
 
         axs[4].plot(self.s.t, error[:, 2], color="tab:green")
         axs[4].set_title("")
         axs[4].set_ylabel("$\\theta_v-\\hat{\\theta}_v$ [˚]")
         axs[4].set_xlim(*self.xlim)
+        axs[4].set_ylim(*self.ylim)
         axs[4].grid()
 
         axs[4].set_xlabel("Time [s]")
@@ -150,6 +164,7 @@ class Plots:
         plt.title("Control torque applied at wrist joint")
         plt.ylabel("$u_3$ [Nm]")
         plt.xlim(*self.xlim)
+        plt.ylim(-1.5, 1.5)
         plt.grid()
 
         plt.xlabel("Time [s]")

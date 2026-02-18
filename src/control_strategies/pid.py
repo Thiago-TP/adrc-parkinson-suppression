@@ -34,9 +34,10 @@ class PIDControl(System):
 
         self.e[2] = self.e[1]
         self.e[1] = self.e[0]
-        self.e[0] = (self.theta_v[-1] - self.theta[-1])[-1]
+        self.e[0] = (self.theta_v_hat[-1] - self.theta[-1])[-1]
+
         update = np.array([0.0, 0.0, np.dot(self.a_vec, self.e)])
+
         self.u.append(self.u[-1] + update)
 
-        # self.u[-1] = np.array([0.0, 0.0, 0.0]) # emergency button
         return self.u[-1]

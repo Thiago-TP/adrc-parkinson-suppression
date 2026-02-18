@@ -1,9 +1,13 @@
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from typing import final, Callable
+from copy import deepcopy
 
-import numpy as np
 import scipy
+import numpy as np
+from numpy.random import MT19937, RandomState, SeedSequence
+
+rs = RandomState(MT19937(SeedSequence(42)))
 
 
 @dataclass(frozen=True)
@@ -49,7 +53,8 @@ class System(ABC):
         ic: tuple[float],
         t0: float = 0.0,
         t1: float = 5.0,
-        dt: float = 1e-4,
+        dt: float = 1e-3,
+        noise_var: float = 5 * np.pi / 180
     ) -> None:
 
         # Model name
@@ -71,6 +76,7 @@ class System(ABC):
 
         # Control signal history
         self.u: list[np.ndarray] = [np.array([0.0, 0.0, 0.0])]
+        self.x: list[np.ndarray] | None = None
 
         # Time response
         self.theta: np.ndarray | None = None
@@ -83,6 +89,10 @@ class System(ABC):
         self.dt: float = dt
         self.t: np.ndarray = np.arange(t0, t1 + self.dt, self.dt)
         self.initial_conditions: tuple[float] = ic
+
+        # Noise injection/filtering parameters
+        self.noise_var: float = noise_var # deviation of 5° on measurement noise
+        self.alpha: list[np.ndarray] = [np.array([1.0, 1.0, 1.0])] # measurement noise filter parameter
 
         # Load model parameters to fill matrices
         self.update_model_parameters(params)
@@ -109,10 +119,6 @@ class System(ABC):
 
     def simulate_system(self) -> None:
 
-        # print(self.a)
-        # print(x)
-        # print(self.initial_conditions)
-
         # State dynamics
         def f_vol(t, x): return self.a @ x + self.b @ self.tau_v(t)
         def f_all(t, x, u): return f_vol(t, x) + self.b @ (self.tau_i(t) + u)
@@ -120,12 +126,15 @@ class System(ABC):
         # Initialization
         x = np.array(self.initial_conditions)
         x_v = np.array(self.initial_conditions)
+        self.x = [x]
         self.theta = [self.c_ss @ x]
         self.theta_v = [self.c_ss @ x_v]
+        self.theta_v_hat = [self.theta[-1]]
 
         # 4th order Runge-Kutta with fixed time step
         for t in self.t[:-1]:
-            u = self.control() # implicitly updates self.u
+
+            u = self.control()
 
             # Update k1 through k4 (Measured response)
             k1 = f_all(t, x, u)
@@ -133,9 +142,12 @@ class System(ABC):
             k3 = f_all(t + (self.dt / 2), x + (self.dt * k2 / 2), u)
             k4 = f_all(t + (self.dt), x + (self.dt * k3), u)
 
-            # Update state, response
+            # Update state
             x += (self.dt / 6) * (k1 + (2 * k2) + (2 * k3) + k4)
-            self.theta.append(self.c_ss @ x)
+            self.x.append(x)
+
+            # Update measured response
+            self.theta.append(self.add_noise(self.c_ss @ x))
 
             # Update k1 through k4 (Voluntary trajectory)
             k1 = f_vol(t, x_v)
@@ -143,13 +155,19 @@ class System(ABC):
             k3 = f_vol(t + (self.dt / 2), x_v + (self.dt * k2 / 2))
             k4 = f_vol(t + (self.dt), x_v + (self.dt * k3))
 
-            # Update state, response
-            x_v += (self.dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
+            # Update voluntary state
+            x_v += (self.dt / 6) * (k1 + (2 * k2) + (2 * k3) + k4)
+
+            # Update voluntary response
             self.theta_v.append(self.c_ss @ x_v)
+
+            # Update estimation of voluntary response
+            self.theta_v_hat.append(self.adaptive_filter(self.theta[-1]))
 
         # Cast to numpy array
         self.theta = np.array(self.theta)
         self.theta_v = np.array(self.theta_v)
+        self.theta_v_hat = np.array(self.theta_v_hat)
         self.u = np.array(self.u)
         return
 
@@ -239,10 +257,19 @@ class System(ABC):
         self.c_ss = np.concatenate((iden, null), axis=1)  # output matrix
 
     @final
-    def add_noise(self):
-        pass
+    def add_noise(self, theta: np.ndarray) -> np.ndarray:
+        noise = rs.normal(0.0, self.noise_var, size=theta.shape)
+        return theta + noise
+    
+    @final 
+    def adaptive_filter(self, measured_theta: np.ndarray) -> np.ndarray:
+        innovation = measured_theta - self.theta_v_hat[-1]
+        alpha = scipy.special.erf(abs(innovation) / (2 * np.sqrt(2 * self.noise_var)))
+        self.alpha.append(alpha)
+        theta_v = self.theta_v_hat[-1] + self.alpha[-1] * innovation
+        return theta_v
     
     @abstractmethod
-    def control(self, t: float) -> np.ndarray:
+    def control(self) -> np.ndarray:
         pass
 
