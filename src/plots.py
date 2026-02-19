@@ -114,7 +114,7 @@ class Plots:
         theta_v = np.array(self.s.theta_v) * 180 / np.pi  # convert radians to degrees
         axs[0].plot(self.s.t, theta_v, "--",
                     label=["Upper arm", "Forearm", "Palm"])
-        axs[0].set_title("Actual Voluntary")
+        axs[0].set_title("Actual voluntary")
         axs[0].set_ylabel("$\\theta_v$ [˚]")
         axs[0].set_xlabel("")
         axs[0].set_xlim(*self.xlim)
@@ -125,7 +125,7 @@ class Plots:
         # Estimation from low-pass filtering
         theta_v_hat = np.array(self.s.theta_v_hat) * 180 / np.pi  # radians to degrees
         axs[1].plot(self.s.t, theta_v_hat, "--")
-        axs[1].set_title("Estimated Voluntary (Low-pass filtered)")
+        axs[1].set_title("Estimated voluntary (low-pass filtered)")
         axs[1].set_ylabel("$\\hat{\\theta}_v$ [˚]")
         axs[1].set_xlabel("")
         axs[1].set_xlim(*self.xlim)

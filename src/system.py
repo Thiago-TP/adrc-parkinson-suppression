@@ -132,15 +132,9 @@ class System(ABC):
         self.theta_filtered = [self.theta_true[-1]]
         self.theta_v = [self.c_ss @ x_v]
         self.theta_v_hat = [self.theta_filtered[-1]]
-        
-        self.tau3v = []
-        self.tau3i = []
 
         # 4th order Runge-Kutta with fixed time step
         for t in self.t[:-1]:
-
-            self.tau3v.append(self.tau_v(t)[2])
-            self.tau3i.append(self.tau_i(t)[2])
 
             u = self.control()
 
@@ -185,8 +179,7 @@ class System(ABC):
 
         return
 
-    def estimate_voluntary(
-            self, f_cutoff: float = 1.0):
+    def estimate_voluntary(self, f_cutoff: float = 1.0):
         # Estimate voluntary time response using low-pass filtering
 
         # Design a Butterworth low-pass filter

@@ -42,9 +42,6 @@ class ADRControl(System):
         e = np.array(self.theta_v) - np.array(self.theta_true)
         xe1 = e[-1, 2] # error on theta3
         delta_xe1 = xe1 - self.xe1_hat
-
-        # Estimation of voluntary torque
-        # tau3_v_hat = self._estimate_voluntary_torque()
         
         # Extended State Observer of error
         dxe1_hat = self.xe2_hat + self.lambda1 * delta_xe1
@@ -65,16 +62,3 @@ class ADRControl(System):
         self.u.append(np.array([0.0, 0.0, u3]))
 
         return self.u[-1]
-    
-    def _estimate_voluntary_torque(self) -> np.ndarray:
-        # dx = Ax + Bu
-        # Bu = dx - Ax
-        # (B^TB)u = B^T (dx-Ax)
-        # u = (B^TB)^-1 B^T (dx - Ax)
-        #   = g (dx - Ax)
-        # If u3 ~ tau_i, then u ~ tau_v
-        g = np.linalg.inv(self.b.T @ self.b) @ self.b.T
-        x_hat_dot = np.diff(self.x_hat, axis=0, prepend=[self.x_hat[0]])
-        tau_v_hat = g @ (x_hat_dot[-1] - self.a @ self.x_hat[-1])
-        tau3_v_hat = tau_v_hat[2]
-        return tau3_v_hat
