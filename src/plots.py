@@ -52,12 +52,19 @@ class Plots:
         plt.close()
 
     def plot_time_response(self, save_results: bool = True):
-        theta = self.s.theta * 180 / np.pi  # Convert from radians to degrees
+        # Convert from radians to degrees
+        theta_t = np.array(self.s.theta_true) * 180 / np.pi  
+        theta = np.array(self.s.theta) * 180 / np.pi
+        theta_f = np.array(self.s.theta_filtered) * 180 / np.pi
+        theta_v = np.array(self.s.theta_v) * 180 / np.pi
+
         plt.figure()
         fig, axs = plt.subplots(
             nrows=3, ncols=1, sharex=True, sharey=True, figsize=(10, 8))
 
         axs[0].plot(self.s.t, theta[:, 0], color="tab:blue", label="Upper arm")
+        axs[0].plot(self.s.t, theta_f[:, 0], alpha=0.25, linestyle="--", color="tab:gray")
+        axs[0].plot(self.s.t, theta_t[:, 0], alpha=0.25, linestyle=":", color="black")
         axs[0].set_title("Upper limb time response")
         axs[0].set_ylabel("$\\theta$ [˚]")
         axs[0].set_xlabel("")
@@ -67,6 +74,8 @@ class Plots:
         axs[0].grid()
 
         axs[1].plot(self.s.t, theta[:, 1], color="tab:orange", label="Forearm")
+        axs[1].plot(self.s.t, theta_f[:, 1], alpha=0.25, linestyle="--", color="tab:gray")
+        axs[1].plot(self.s.t, theta_t[:, 1], alpha=0.25, linestyle=":", color="black")
         axs[1].set_ylabel("$\\theta$ [˚]")
         axs[1].set_xlabel("")
         axs[1].set_xlim(*self.xlim)
@@ -74,8 +83,11 @@ class Plots:
         axs[1].legend()
         axs[1].grid()
 
-        axs[2].plot(self.s.t, theta[:, 2], color="tab:green", label="Palm")
-        axs[2].set_ylabel("$\\theta$ [˚]")
+        axs[2].plot(self.s.t, theta[:, 2], color="tab:green", label="$\\theta$")
+        axs[2].plot(self.s.t, theta_f[:, 2], alpha=0.25, linestyle="--", color="tab:gray")
+        axs[2].plot(self.s.t, theta_t[:, 2], alpha=0.25, linestyle=":", color="black")
+        axs[2].plot(self.s.t, theta_v[:, 2], linestyle="--", color="tab:olive", label="$\\theta_v$")
+        axs[2].set_ylabel("Palm angle [˚]")
         axs[2].set_xlabel("Time [s]")
         axs[2].set_xlim(*self.xlim)
         axs[2].set_ylim(*self.ylim)
@@ -99,7 +111,7 @@ class Plots:
         fig.suptitle("Upper Limb Time response")
 
         # Actual voluntary time response
-        theta_v = self.s.theta_v * 180 / np.pi  # convert radians to degrees
+        theta_v = np.array(self.s.theta_v) * 180 / np.pi  # convert radians to degrees
         axs[0].plot(self.s.t, theta_v, "--",
                     label=["Upper arm", "Forearm", "Palm"])
         axs[0].set_title("Actual Voluntary")
@@ -111,10 +123,7 @@ class Plots:
         axs[0].grid()
 
         # Estimation from low-pass filtering
-        theta_v_hat = self.s.theta_v_hat * 180 / np.pi  # radians to degrees
-        ax_alpha = axs[1].twinx()
-        ax_alpha.plot(self.s.t, self.s.alpha, alpha=0.5, color="yellow")
-        ax_alpha.set_ylabel("$\\alpha_t$")
+        theta_v_hat = np.array(self.s.theta_v_hat) * 180 / np.pi  # radians to degrees
         axs[1].plot(self.s.t, theta_v_hat, "--")
         axs[1].set_title("Estimated Voluntary (Low-pass filtered)")
         axs[1].set_ylabel("$\\hat{\\theta}_v$ [˚]")
@@ -160,11 +169,10 @@ class Plots:
         # Plot control signal applied to wrist joint
 
         plt.figure()
-        plt.plot(self.s.t, self.s.u[:, 2], color="tab:green")
+        plt.plot(self.s.t, np.array(self.s.u)[:, 2], color="tab:green")
         plt.title("Control torque applied at wrist joint")
         plt.ylabel("$u_3$ [Nm]")
         plt.xlim(*self.xlim)
-        plt.ylim(-1.5, 1.5)
         plt.grid()
 
         plt.xlabel("Time [s]")

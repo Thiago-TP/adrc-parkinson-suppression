@@ -16,28 +16,31 @@ class PIDControl(System):
         
         # Proportional, integral, derivative gains
         self.kp = kp
-        self.ki = ki
-        self.kd = kd
+        self.ki = ki * self.dt
+        self.kd = kd / self.dt
         
-        # Error coefficients
-        self.a0 = self.kp + (self.ki * self.dt) + (self.kd / self.dt)
-        self.a1 = -self.kp - (2 * self.kd / self.dt)
-        self.a2 = (self.kd / self.dt)
-        self.a_vec = np.array([self.a0, self.a1, self.a2])
+        # Errors for calculating control
+        self.error_control = 0.0
+        self.error_sum = 0.0
+        self.error_delta = 0.0
+        self.error_previous = 0.0
         
-        # Tracking error of wrist angle
-        self.e = np.array([0.0, 0.0, 0.0])
         return
 
     def control(self) -> np.ndarray:
         # PID control with fixed gains
+        # For more details, check out 
+        # https://alphaville.github.io/qub/pid-101/#/
 
-        self.e[2] = self.e[1]
-        self.e[1] = self.e[0]
-        self.e[0] = (self.theta_v_hat[-1] - self.theta[-1])[-1]
+        self.error_control = self.theta_v_hat[-1][2] - self.theta_filtered[-1][2]
+        self.error_delta = self.error_control - self.error_previous
 
-        update = np.array([0.0, 0.0, np.dot(self.a_vec, self.e)])
+        u3 = np.dot([self.kp, self.ki, self.kd], 
+                    [self.error_control, self.error_sum, self.error_delta])
 
-        self.u.append(self.u[-1] + update)
+        self.error_sum += self.error_control
+        self.error_previous = self.error_control
+
+        self.u.append(np.array([0.0, 0.0, u3]))
 
         return self.u[-1]
