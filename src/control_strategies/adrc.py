@@ -1,4 +1,3 @@
-import scipy
 import numpy as np
 from system import System, ModelParameters
 
@@ -9,10 +8,10 @@ class ADRControl(System):
         name: str,
         params: ModelParameters,
         ic: tuple[float],
-        omega_c: float = 0.8
+        omega_c: float = 0.3
     ) -> None:
         super().__init__(name, params, ic)
-        
+
         # Proportional, derivative gains
         self.kp = omega_c ** 2
         self.kd = 2 * omega_c / self.dt
@@ -28,7 +27,6 @@ class ADRControl(System):
 
         return
 
-
     def control(self) -> np.ndarray:
         # j*dy2/dt2 + c*dy/dt + k*y = u3 + tau_v + tau_i + f
         # dy2/dt2 = (u3 + tau_v)/j + zeta
@@ -38,16 +36,16 @@ class ADRControl(System):
         # Last control output
         u3_old = self.u[-1][2]
 
-        # Tracking error 
+        # Tracking error
         e = np.array(self.theta_v) - np.array(self.theta_true)
-        xe1 = e[-1, 2] # error on theta3
+        xe1 = e[-1, 2]  # error on theta3
         delta_xe1 = xe1 - self.xe1_hat
-        
+
         # Extended State Observer of error
         dxe1_hat = self.xe2_hat + self.lambda1 * delta_xe1
         dxe2_hat = - u3_old \
-                   + self.z \
-                   + self.lambda2 * delta_xe1
+            + self.z \
+            + self.lambda2 * delta_xe1
         dz = self.lambda3 * delta_xe1
 
         self.xe1_hat += (dxe1_hat * self.dt)
@@ -56,6 +54,7 @@ class ADRControl(System):
 
         # Control (PD)
         u3_adrc = (self.kp * self.xe1_hat) + (self.kd * self.xe2_hat) + self.z
+        # u3_adrc = self.z
         u3 = u3_adrc
 
         # Update of control history

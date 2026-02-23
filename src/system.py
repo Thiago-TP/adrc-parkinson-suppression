@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from typing import final, Callable
-from copy import deepcopy
 
 import scipy
 import numpy as np
@@ -91,8 +90,8 @@ class System(ABC):
         self.initial_conditions: tuple[float] = ic
 
         # Noise injection/filtering parameters
-        self.noise_var: float = noise_var # deviation of 5° on measurement noise
-        self.alpha: list[float] = [1.0] # measurement noise filter parameter
+        self.noise_var: float = noise_var  # deviation of 5° on measurement
+        self.alpha: list[float] = [1.0]  # measurement noise filter parameter
 
         # Load model parameters to fill matrices
         self.update_model_parameters(params)
@@ -190,7 +189,7 @@ class System(ABC):
 
         # Apply the filter to each column of theta
         try:
-            return scipy.signal.filtfilt(b, a, self.theta_filtered, axis=0)
+            return scipy.signal.filtfilt(b, a, self.theta, axis=0)
         except ValueError:
             return self.theta_filtered
 
@@ -230,8 +229,8 @@ class System(ABC):
         j33 = p.j3 + p.m3 * a3**2
 
         self.j = np.array([
-            [j11, j12, j13], 
-            [j21, j22, j23], 
+            [j11, j12, j13],
+            [j21, j22, j23],
             [j31, j32, j33]
         ])
         self.k = np.array([
@@ -266,20 +265,20 @@ class System(ABC):
     def add_noise(self, theta: np.ndarray) -> np.ndarray:
         noise = rs.normal(0.0, self.noise_var, size=theta.shape)
         return theta + noise
-    
-    @final 
+
+    @final
     def adaptive_filter(self, measured_theta: np.ndarray) -> np.ndarray:
         # Calculate innovation, i.e. error
         innovation = measured_theta - self.theta_filtered[-1]
 
         # Calculate alpha only relative to wrist angle
-        alpha = scipy.special.erf(abs(innovation[2]) / (2 * np.sqrt(2 * self.noise_var)))
+        alpha = scipy.special.erf(
+            abs(innovation[2]) / (2 * np.sqrt(2 * self.noise_var)))
         self.alpha.append(alpha)
 
         # Return filtered measurement
         return self.theta_filtered[-1] + self.alpha[-1] * innovation
-    
+
     @abstractmethod
     def control(self) -> np.ndarray:
         pass
-

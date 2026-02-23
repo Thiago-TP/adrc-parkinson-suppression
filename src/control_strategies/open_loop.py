@@ -15,5 +15,5 @@ class OpenLoopControl(System):
     def control(self) -> np.ndarray:
         # Null control signal in open loop
         control = np.array([0.0, 0.0, 0.0])
-        self.u.append(control) # register control signal to history
+        self.u.append(control)  # register control signal to history
         return self.u[-1]

@@ -16,14 +16,14 @@ def main() -> None:
     ic = tuple(cfgs["initial_conditions"].values())
 
     # Run model with different control strategies
-    ol = open_loop.OpenLoopControl("open_loop", nominal_model, ic)
-    pidc = pid.PIDControl("pid", nominal_model, ic)
-    adr = adrc.ADRControl("adrc", nominal_model, ic)
+    no_control = open_loop.OpenLoopControl("open_loop", nominal_model, ic)
+    pid_control = pid.PIDControl("pid", nominal_model, ic)
+    adr_control = adrc.ADRControl("adrc", nominal_model, ic)
 
     for control in [
-        ol, 
-        pidc, 
-        adr,
+        no_control,
+        pid_control,
+        adr_control,
     ]:
         control.load_torque_profiles()
         control.simulate_system()
