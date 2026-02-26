@@ -8,22 +8,24 @@ class ADRControl(System):
         name: str,
         params: ModelParameters,
         ic: tuple[float],
-        omega_c: float = 0.3
+        omega_c: float = 10
     ) -> None:
         super().__init__(name, params, ic)
 
         # Proportional, derivative gains
         self.kp = omega_c ** 2
-        self.kd = 2 * omega_c / self.dt
+        self.kd = 2 * omega_c
 
         # Error based Extended State Observer gains and states
-        omega_o = 5 * omega_c
+        omega_o = 10 * omega_c
         self.lambda1 = 3 * omega_o
         self.lambda2 = 3 * (omega_o ** 2)
         self.lambda3 = omega_o ** 3
         self.xe1_hat = 0.0
         self.xe2_hat = 0.0
         self.z = 0.0
+        # self.b0 = 1/self.j[2][2]
+        self.b0 = np.linalg.inv(self.j)[2][2]
 
         return
 
@@ -37,13 +39,13 @@ class ADRControl(System):
         u3_old = self.u[-1][2]
 
         # Tracking error
-        e = np.array(self.theta_v) - np.array(self.theta_true)
+        e = np.array(self.theta_v_hat) - np.array(self.theta_filtered)
         xe1 = e[-1, 2]  # error on theta3
         delta_xe1 = xe1 - self.xe1_hat
 
         # Extended State Observer of error
         dxe1_hat = self.xe2_hat + self.lambda1 * delta_xe1
-        dxe2_hat = - u3_old \
+        dxe2_hat = - self.b0 * u3_old \
             + self.z \
             + self.lambda2 * delta_xe1
         dz = self.lambda3 * delta_xe1
@@ -55,7 +57,7 @@ class ADRControl(System):
         # Control (PD)
         u3_adrc = (self.kp * self.xe1_hat) + (self.kd * self.xe2_hat) + self.z
         # u3_adrc = self.z
-        u3 = u3_adrc
+        u3 = u3_adrc / self.b0
 
         # Update of control history
         self.u.append(np.array([0.0, 0.0, u3]))
