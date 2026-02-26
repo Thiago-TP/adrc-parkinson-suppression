@@ -51,7 +51,7 @@ class System(ABC):
         params: ModelParameters,
         ic: tuple[float],
         t0: float = 0.0,
-        t1: float = 5.0,
+        t1: float = 6.0,
         dt: float = 1e-3,
         noise_var: float = 4 * np.pi / 180
     ) -> None:

@@ -6,7 +6,7 @@ from system import System
 class Plots:
 
     def __init__(self, system: System,
-                 xlim: tuple[float, float] = (0, 5),
+                 xlim: tuple[float, float] = (0, 6),
                  ylim: tuple[float, float] = (-100, 100)):
         self.s = system
         self.xlim = xlim
