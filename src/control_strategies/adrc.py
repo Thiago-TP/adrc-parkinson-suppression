@@ -24,7 +24,6 @@ class ADRControl(System):
         self.xe1_hat = 0.0
         self.xe2_hat = 0.0
         self.z = 0.0
-        # self.b0 = 1/self.j[2][2]
         self.b0 = np.linalg.inv(self.j)[2][2]
 
         return
@@ -56,7 +55,6 @@ class ADRControl(System):
 
         # Control (PD)
         u3_adrc = (self.kp * self.xe1_hat) + (self.kd * self.xe2_hat) + self.z
-        # u3_adrc = self.z
         u3 = u3_adrc / self.b0
 
         # Update of control history
