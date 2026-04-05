@@ -44,16 +44,42 @@ class ModelParameters:
     c4: float  # wrist
 
 
+InitialConditions = tuple[float, float, float, float, float, float]
+
+
 class System(ABC):
+    """
+    Implementation of system dynamics, including state-space representation,
+    noise injection and filtering, and placeholders for control strategies.
+
+    Parameters
+    ----------
+    name: str
+        Name of the system, used for saving results.
+    params: ModelParameters
+        Model parameters to be used in the system dynamics.
+    ic: InitialConditions
+        Initial conditions for the state variables
+        (theta and theta_dot for each joint).
+    t0: float, optional
+        Initial time for the simulation in seconds, by default 0.0.
+    t1: float, optional
+        Final time for the simulation in seconds, by default 6.0.
+    dt: float, optional
+        Time step for the simulation in seconds, by default 1e-3.
+    noise_var: float, optional
+        Variance of the measurement noise, by default 4 * np.pi / 180 (4°).
+    """
+
     def __init__(
         self,
         name: str,
         params: ModelParameters,
-        ic: tuple[float],
+        ic: InitialConditions,
         t0: float = 0.0,
         t1: float = 6.0,
         dt: float = 1e-3,
-        noise_var: float = 4 * np.pi / 180
+        noise_var: float = 4 * np.pi / 180,
     ) -> None:
 
         # Model name
@@ -86,15 +112,25 @@ class System(ABC):
 
         # Time vector and initial conditions
         self.dt: float = dt
+        self.fs = 1 / self.dt
         self.t: np.ndarray = np.arange(t0, t1 + self.dt, self.dt)
-        self.initial_conditions: tuple[float] = ic
+        self.initial_conditions: InitialConditions = ic
 
         # Noise injection/filtering parameters
-        self.noise_var: float = noise_var  # deviation of 5° on measurement
-        self.alpha: list[float] = [1.0]  # measurement noise filter parameter
+        self.noise_var: float = noise_var
+        self.alpha: list[float] = [1.0]
 
         # Load model parameters to fill matrices
         self.update_model_parameters(params)
+
+        # Set voluntary motion estimator
+        self.butter_sos = scipy.signal.butter(
+            N=1,
+            Wn=5.0,
+            fs=self.fs,
+            btype="low",
+            output="sos"
+        )
 
         return
 
@@ -156,7 +192,7 @@ class System(ABC):
             self.theta_filtered.append(self.adaptive_filter(self.theta[-1]))
 
             # Update estimation of voluntary response
-            self.theta_v_hat = self.estimate_voluntary()
+            self.theta_v_hat = self._estimate_voluntary()
 
             # Update estimation of state
             theta_dot = np.diff(self.theta, axis=0)
@@ -178,18 +214,12 @@ class System(ABC):
 
         return
 
-    def estimate_voluntary(self, f_cutoff: float = 1.0):
-        # Estimate voluntary time response using low-pass filtering
-
-        # Design a Butterworth low-pass filter
-        fs = 1 / self.dt  # sampling frequency in Hz
-        b, a = scipy.signal.butter(
-            N=4, Wn=2 * np.pi * f_cutoff, fs=fs, btype="low", analog=False
-        )
-
+    def _estimate_voluntary(self) -> list[np.ndarray]:
         # Apply the filter to each column of theta
         try:
-            return scipy.signal.filtfilt(b, a, self.theta, axis=0)
+            return scipy.signal.sosfiltfilt(
+                self.butter_sos, self.theta, axis=0,
+            )
         except ValueError:
             return self.theta_filtered
 
