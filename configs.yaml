@@ -34,11 +34,11 @@ nominal_parameters:
 
 # Distribution intervals of key model coefficients
 
-# Initial conditions
+# Initial conditions (values in rad, rad/s)
 initial_conditions:
-  theta_shoulder: 1.0
-  theta_elbow: 0.0
-  theta_wrist: 0.0
+  theta_shoulder: 0.5
+  theta_elbow: 0.1
+  theta_wrist: 0.05
   theta_shoulder_dot: 0.0
   theta_elbow_dot: 0.0
-  theta_wrist_dot: 0.0
+  theta_wrist_dot: 0.01

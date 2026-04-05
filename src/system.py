@@ -133,7 +133,7 @@ class System(ABC):
         self.theta_v_hat = [self.theta_filtered[-1]]
 
         # 4th order Runge-Kutta with fixed time step
-        for t in self.t[:-1]:
+        for t in self.t[1:]:
 
             u = self.control()
 

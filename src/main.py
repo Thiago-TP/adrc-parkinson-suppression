@@ -21,9 +21,9 @@ def main() -> None:
     adr_control = adrc.ADRControl("adrc", nominal_model, ic)
 
     for control in [
-        no_control,
-        pid_control,
         adr_control,
+        pid_control,
+        no_control,
     ]:
         control.load_torque_profiles()
         control.simulate_system()
