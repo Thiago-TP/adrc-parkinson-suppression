@@ -49,6 +49,7 @@ class Plots:
                 pad_inches=0.1,
                 bbox_inches="tight",
             )
+            print(f"* Saved torque profiles plot for {self.s.name} to results folder.")
         plt.close()
 
     def plot_time_response(self, save_results: bool = True):
@@ -94,6 +95,7 @@ class Plots:
                 pad_inches=0.1,
                 bbox_inches="tight",
             )
+            print(f"* Saved time response plot for {self.s.name} to results folder.")
         plt.close()
 
     def plot_voluntary_time_response(self, save_results: bool = True):
@@ -159,6 +161,7 @@ class Plots:
                 pad_inches=0.1,
                 bbox_inches="tight",
             )
+            print(f"* Saved voluntary time response plot for {self.s.name} to results folder.")
         plt.close()
 
     def plot_control(self, save_results: bool = True) -> None:
@@ -179,4 +182,5 @@ class Plots:
                 pad_inches=0.1,
                 bbox_inches="tight",
             )
+            print(f"* Saved control plot for {self.s.name} to results folder.")
         plt.close()

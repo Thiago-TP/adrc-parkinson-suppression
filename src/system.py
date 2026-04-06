@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
+import os
+import time
 from typing import final, Callable
 
 import scipy
@@ -9,7 +11,7 @@ from numpy.random import MT19937, RandomState, SeedSequence
 rs = RandomState(MT19937(SeedSequence(42)))
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=False)
 class ModelParameters:
     # Lengths
     l1: float  # upper arm
@@ -42,6 +44,9 @@ class ModelParameters:
     c2: float  # elbow
     c3: float  # biceps
     c4: float  # wrist
+
+    # Stiffness uncertainty intervals
+    stiffness_intervals: dict[str, list[float]]
 
 
 InitialConditions = tuple[float, float, float, float, float, float]
@@ -121,7 +126,8 @@ class System(ABC):
         self.alpha: list[float] = [1.0]
 
         # Load model parameters to fill matrices
-        self.update_model_parameters(params)
+        self.params = params
+        self._set_model()
 
         # Set voluntary motion estimator
         self.butter_sos = scipy.signal.butter(
@@ -132,10 +138,13 @@ class System(ABC):
             output="sos"
         )
 
+        # Results storage across runs
+        self.results = {}
+
         return
 
     def load_torque_profiles(self) -> None:
-        # Placeholders for now
+        print("Loading torque profiles...")
         self.tau_v = lambda t: 1.0 * np.array(
             [
                 np.cos(2 * np.pi * 0.1 * t),
@@ -154,6 +163,9 @@ class System(ABC):
 
     def simulate_system(self) -> None:
 
+        print(f"Simulating system {self.name}...")
+        __start = time.time()
+
         # State dynamics
         def f_vol(t, x): return self.a @ x + self.b @ self.tau_v(t)
         def f_all(t, x, u): return f_vol(t, x) + self.b @ (self.tau_i(t) + u)
@@ -163,7 +175,7 @@ class System(ABC):
         x_v = np.array(self.initial_conditions)
         self.x_hat = [x]
         self.theta_true = [self.c_ss @ x]
-        self.theta = [self.add_noise(self.theta_true[-1])]
+        self.theta = [self._add_noise(self.theta_true[-1])]
         self.theta_filtered = [self.theta_true[-1]]
         self.theta_v = [self.c_ss @ x_v]
         self.theta_v_hat = [self.theta_filtered[-1]]
@@ -186,10 +198,11 @@ class System(ABC):
             self.theta_true.append(self.c_ss @ x)
 
             # Update measured response
-            self.theta.append(self.add_noise(self.theta_true[-1]))
+            self.theta.append(self._add_noise(self.theta_true[-1]))
 
             # Mitigate measurement noise
-            self.theta_filtered.append(self.adaptive_filter(self.theta[-1]))
+            # self.theta_filtered.append(self.adaptive_filter(self.theta[-1]))
+            self.theta_filtered.append(self.theta[-1])
 
             # Update estimation of voluntary response
             self.theta_v_hat = self._estimate_voluntary()
@@ -212,6 +225,33 @@ class System(ABC):
             # Update true voluntary response
             self.theta_v.append(self.c_ss @ x_v)
 
+        __end = time.time()
+        print(f"Run took {__end - __start :.2f} s")
+
+        # Store run results
+        if self.results == {}:
+            key = "nominal_run"
+        else:
+            key = f"non_nominal_run_{len(self.results)}"
+        self.results[key] = {
+            "time": self.t,
+            "theta_true": self.theta_true,
+            "theta": self.theta,
+            "theta_filtered": self.theta_filtered,
+            "theta_v": self.theta_v,
+            "theta_v_hat": self.theta_v_hat,
+            "parameters": self.params,
+        }
+
+        return
+    
+    def save_results(self) -> None:
+        """
+        Dumps simulation results across runs to a npz file in folder result. 
+        Overwrites file if npz already existed.
+        """
+        os.makedirs("results", exist_ok=True)
+        np.savez_compressed(f"results/{self.name}.npz", **self.results)
         return
 
     def _estimate_voluntary(self) -> list[np.ndarray]:
@@ -224,12 +264,14 @@ class System(ABC):
             return self.theta_filtered
 
     @final
-    def update_model_parameters(self, p: ModelParameters) -> None:
-        self._set_dynamics(p)
+    def _set_model(self) -> None:
+        self._set_dynamics()
         self._set_state_space()
 
     @final
-    def _set_dynamics(self, p: ModelParameters) -> None:
+    def _set_dynamics(self) -> None:
+        p = self.params # shorthand for readability
+
         a1 = p.a1 * p.l1
         a2 = p.a2 * p.l2
         a3 = p.a3 * p.l3
@@ -292,7 +334,7 @@ class System(ABC):
         self.c_ss = np.concatenate((iden, null), axis=1)  # output matrix
 
     @final
-    def add_noise(self, theta: np.ndarray) -> np.ndarray:
+    def _add_noise(self, theta: np.ndarray) -> np.ndarray:
         noise = rs.normal(0.0, self.noise_var, size=theta.shape)
         return theta + noise
 
@@ -308,6 +350,16 @@ class System(ABC):
 
         # Return filtered measurement
         return self.theta_filtered[-1] + self.alpha[-1] * innovation
+    
+    @final
+    def resample_stiffness(self) -> None:
+        print("Resampling stiffness parameters...")
+        self.params.k1 = rs.uniform(*self.params.stiffness_intervals["k1"])
+        self.params.k2 = rs.uniform(*self.params.stiffness_intervals["k2"])
+        self.params.k3 = rs.uniform(*self.params.stiffness_intervals["k3"])
+        self.params.k4 = rs.uniform(*self.params.stiffness_intervals["k4"])
+        self._set_model()
+        return
 
     @abstractmethod
     def control(self) -> np.ndarray:

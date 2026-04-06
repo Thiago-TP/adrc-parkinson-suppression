@@ -1,5 +1,5 @@
-# Nominal values of model coefficients
-nominal_parameters:
+# Nominal values of model coefficients and uncertainty intervals
+parameters:
   # Lengths
   l1: 0.364 # upper arm
   l2: 0.299 # forearm
@@ -32,7 +32,11 @@ nominal_parameters:
   c3: 0.002 # biceps
   c4: 0.001 # wrist
 
-# Distribution intervals of key model coefficients
+  stiffness_intervals:
+    k1: [150, 210] # shoulder stiffness
+    k2: [50, 90]   # elbow stiffness
+    k3: [30, 50]   # biceps stiffness
+    k4: [5, 15]    # wrist stiffness
 
 # Initial conditions (values in rad, rad/s)
 initial_conditions:
