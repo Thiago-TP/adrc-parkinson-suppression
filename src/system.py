@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from abc import ABC, abstractmethod
 import os
 import time
-from typing import final, Callable
+from typing import final
 
 import scipy
 import numpy as np
@@ -46,7 +46,7 @@ class ModelParameters:
     c4: float  # wrist
 
     # Stiffness uncertainty intervals
-    stiffness_intervals: dict[str, list[float]]
+    stiffness_intervals: dict[str, tuple[float, float]]
 
 
 InitialConditions = tuple[float, float, float, float, float, float]
@@ -73,7 +73,8 @@ class System(ABC):
     dt: float, optional
         Time step for the simulation in seconds, by default 1e-3.
     noise_var: float, optional
-        Variance of the measurement noise, by default 4 * np.pi / 180 (4°).
+        Variance of the measurement noise in radians,
+        by default 4 * np.pi / 180 (4°).
     """
 
     def __init__(
@@ -85,15 +86,16 @@ class System(ABC):
         t1: float = 6.0,
         dt: float = 1e-3,
         noise_var: float = 4 * np.pi / 180,
+        amplitude_voluntary: float = 1.0,
     ) -> None:
 
         # Model name
         self.name = name
 
         # Model dynamics parameters
-        self.j: np.ndarray | None = None  # inertia
-        self.k: np.ndarray | None = None  # stiffness
-        self.c: np.ndarray | None = None  # damping
+        self.j: np.ndarray = np.zeros((3, 3))  # inertia
+        self.k: np.ndarray = np.zeros((3, 3))  # stiffness
+        self.c: np.ndarray = np.zeros((3, 3))  # damping
 
         # State space matrices
         self.a: np.ndarray | None = None  # state matrix
@@ -101,8 +103,21 @@ class System(ABC):
         self.c_ss: np.ndarray | None = None  # output matrix
 
         # Torque profiles (voluntary and involuntary)
-        self.tau_v: Callable[[float], np.ndarray] | None = None
-        self.tau_i: Callable[[float], np.ndarray] | None = None
+        self.amplitude_voluntary = amplitude_voluntary
+        self.tau_v = lambda t: amplitude_voluntary * np.array(
+            [
+                np.cos(2 * np.pi * 0.1 * t),
+                np.cos(2 * np.pi * 0.2 * t),
+                np.cos(2 * np.pi * 0.3 * t),
+            ]
+        )
+        self.tau_i = lambda t: np.array(
+            [
+                np.cos(2 * np.pi * 3.58803 * t),
+                np.cos(2 * np.pi * 5.30097 * t),
+                np.cos(2 * np.pi * 14.34746 * t),
+            ]
+        )
 
         # Control signal history
         self.u: list[np.ndarray] = [np.array([0.0, 0.0, 0.0])]
@@ -143,24 +158,6 @@ class System(ABC):
 
         return
 
-    def load_torque_profiles(self) -> None:
-        print("Loading torque profiles...")
-        self.tau_v = lambda t: 1.0 * np.array(
-            [
-                np.cos(2 * np.pi * 0.1 * t),
-                np.cos(2 * np.pi * 0.2 * t),
-                np.cos(2 * np.pi * 0.3 * t),
-            ]
-        )
-        self.tau_i = lambda t: np.array(
-            [
-                np.cos(2 * np.pi * 3.58803 * t),
-                np.cos(2 * np.pi * 5.30097 * t),
-                np.cos(2 * np.pi * 14.34746 * t),
-            ]
-        )
-        return
-
     def simulate_system(self) -> None:
 
         print(f"Simulating system {self.name}...")
@@ -183,7 +180,7 @@ class System(ABC):
         # 4th order Runge-Kutta with fixed time step
         for t in self.t[1:]:
 
-            u = self.control()
+            u = self._control()
 
             # Update k1 through k4 (Measured response)
             k1 = f_all(t, x, u)
@@ -226,7 +223,7 @@ class System(ABC):
             self.theta_v.append(self.c_ss @ x_v)
 
         __end = time.time()
-        print(f"Run took {__end - __start :.2f} s")
+        print(f"Run took {__end - __start:.2f} s.")
 
         # Store run results
         if self.results == {}:
@@ -244,14 +241,17 @@ class System(ABC):
         }
 
         return
-    
+
     def save_results(self) -> None:
         """
-        Dumps simulation results across runs to a npz file in folder result. 
+        Dumps simulation results across runs to a npz file in folder result.
         Overwrites file if npz already existed.
         """
         os.makedirs("results", exist_ok=True)
-        np.savez_compressed(f"results/{self.name}.npz", **self.results)
+        np.savez_compressed(
+            f"results/{self.name}_amplitude_{self.amplitude_voluntary}.npz",
+            **self.results
+        )
         return
 
     def _estimate_voluntary(self) -> list[np.ndarray]:
@@ -270,7 +270,7 @@ class System(ABC):
 
     @final
     def _set_dynamics(self) -> None:
-        p = self.params # shorthand for readability
+        p = self.params  # shorthand for readability
 
         a1 = p.a1 * p.l1
         a2 = p.a2 * p.l2
@@ -350,7 +350,7 @@ class System(ABC):
 
         # Return filtered measurement
         return self.theta_filtered[-1] + self.alpha[-1] * innovation
-    
+
     @final
     def resample_stiffness(self) -> None:
         print("Resampling stiffness parameters...")
@@ -362,5 +362,5 @@ class System(ABC):
         return
 
     @abstractmethod
-    def control(self) -> np.ndarray:
+    def _control(self) -> np.ndarray:
         pass

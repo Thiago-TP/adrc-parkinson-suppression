@@ -1,5 +1,5 @@
 import numpy as np
-from system import System, ModelParameters
+from system import System, ModelParameters, InitialConditions
 
 
 class ADRControl(System):
@@ -7,10 +7,12 @@ class ADRControl(System):
         self,
         name: str,
         params: ModelParameters,
-        ic: tuple[float],
-        omega_c: float = 10
+        ic: InitialConditions,
+        omega_c: float = 10,
+        amplitude_voluntary: float = 1.0,
     ) -> None:
-        super().__init__(name, params, ic)
+        super().__init__(name, params, ic,
+                         amplitude_voluntary=amplitude_voluntary)
 
         # Proportional, derivative gains
         self.kp = omega_c ** 2
@@ -28,7 +30,7 @@ class ADRControl(System):
 
         return
 
-    def control(self) -> np.ndarray:
+    def _control(self) -> np.ndarray:
         # j*dy2/dt2 + c*dy/dt + k*y = u3 + tau_v + tau_i + f
         # dy2/dt2 = (u3 + tau_v)/j + zeta
         # dy2/dt2 = u3' + zeta

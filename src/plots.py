@@ -49,7 +49,10 @@ class Plots:
                 pad_inches=0.1,
                 bbox_inches="tight",
             )
-            print(f"* Saved torque profiles plot for {self.s.name} to results folder.")
+            print(
+                f"* Saved torque profiles plot "
+                f"for {self.s.name} to results folder."
+            )
         plt.close()
 
     def plot_time_response(self, save_results: bool = True):
@@ -95,7 +98,10 @@ class Plots:
                 pad_inches=0.1,
                 bbox_inches="tight",
             )
-            print(f"* Saved time response plot for {self.s.name} to results folder.")
+            print(
+                f"* Saved time response plot "
+                f"for {self.s.name} to results folder."
+            )
         plt.close()
 
     def plot_voluntary_time_response(self, save_results: bool = True):
@@ -161,10 +167,13 @@ class Plots:
                 pad_inches=0.1,
                 bbox_inches="tight",
             )
-            print(f"* Saved voluntary time response plot for {self.s.name} to results folder.")
+            print(
+                "* Saved voluntary time response plot "
+                f"for {self.s.name} to results folder."
+            )
         plt.close()
 
-    def plot_control(self, save_results: bool = True) -> None:
+    def plot__control(self, save_results: bool = True) -> None:
         # Plot control signal applied to wrist joint
 
         plt.figure()

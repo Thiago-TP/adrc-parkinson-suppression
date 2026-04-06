@@ -1,5 +1,5 @@
 import numpy as np
-from system import System, ModelParameters
+from system import System, ModelParameters, InitialConditions
 
 
 class PIDControl(System):
@@ -7,12 +7,14 @@ class PIDControl(System):
         self,
         name: str,
         params: ModelParameters,
-        ic: tuple[float],
+        ic: InitialConditions,
         kp: float = 2.0,
         ki: float = 4.0,
-        kd: float = 0.42
+        kd: float = 0.42,
+        amplitude_voluntary: float = 1.0,
     ) -> None:
-        super().__init__(name, params, ic)
+        super().__init__(name, params, ic,
+                         amplitude_voluntary=amplitude_voluntary)
 
         # Proportional, integral, derivative gains
         self.kp = kp
@@ -27,10 +29,17 @@ class PIDControl(System):
 
         return
 
-    def control(self) -> np.ndarray:
+    def _control(self) -> np.ndarray:
         # PID control with fixed gains
         # For more details, check out
         # https://alphaville.github.io/qub/pid-101/#/
+
+        if self.theta_v_hat is None or self.theta_filtered is None:
+            # If the system hasn't been simulated yet, return zero control
+            raise ValueError(
+                "System state is not initialized. "
+                "Run simulate_system() before calling _control()."
+            )
 
         self.error_control = self.theta_v_hat[-1][2] - \
             self.theta_filtered[-1][2]
