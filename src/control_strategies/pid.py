@@ -12,14 +12,21 @@ class PIDControl(System):
         ki: float = 4.0,
         kd: float = 0.42,
         amplitude_voluntary: float = 1.0,
+        manual: bool = False,
+        slow_factor: float = 5.0
     ) -> None:
         super().__init__(name, params, ic,
                          amplitude_voluntary=amplitude_voluntary)
 
-        # Proportional, integral, derivative gains
-        self.kp = kp
-        self.ki = ki * self.dt
-        self.kd = kd / self.dt
+        if manual:
+            # Proportional, integral, derivative gains
+            self.kp = kp
+            self.ki = ki * self.dt
+            self.kd = kd / self.dt
+        else:
+            # Compute the PID gains using IMC
+            self._set_dynamics()
+            self._calculate_imc_pid_gains(slow_factor)
 
         # Errors for calculating control
         self.error_control = 0.0
@@ -28,6 +35,56 @@ class PIDControl(System):
         self.error_previous = 0.0
 
         return
+
+    def _calculate_imc_pid_gains(self, slow_factor: float = 5.0) -> None:
+        """
+        PID IMC Tuning:
+        Detects if poles are real or complex and 
+        applies the appropriate synthesis formula for theta3.
+        """
+        # 1. Physical parameters from the pre-calculated matrices
+        j33 = self.j[2, 2]
+        k4 = self.k[2, 2]
+        c4 = self.c[2, 2]
+
+        # 2. System identification (Standard 2nd Order Form)
+        # G(s) = K / (tau^2*s^2 + 2*zeta*tau*s + 1)
+        k_sys = 1.0 / k4
+        tau = np.sqrt(j33 / k4)
+        zeta = c4 / (2 * np.sqrt(j33 * k4))
+
+        # 3. Desired closed-loop speed (Lambda)
+        lmbda = slow_factor * tau
+
+        # 4. IMC logic selection based on damping ratio (zeta)
+        if zeta >= 1.0:
+            # --- REAL POLES CASE ---
+            # Factorize into (tau1*s + 1)(tau2*s + 1)
+            # Using the quadratic formula for the time constants
+            discriminant = np.sqrt(zeta**2 - 1)
+            tau1 = tau * (zeta + discriminant)
+            tau2 = tau * (zeta - discriminant)
+
+            # Use the slower pole for tuning
+            lmbda = max(tau1, tau2) * slow_factor
+
+            # PID tuning for real poles
+            self.kp = (tau1 + tau2) / (lmbda * k_sys)
+            ti = tau1 + tau2
+            td = (tau1 * tau2) / (tau1 + tau2)
+
+        else:
+            # --- COMPLEX CONJUGATE POLES CASE ---
+            # The controller must account for the oscillatory behavior
+            # Kp formula for underdamped systems:
+            self.kp = (2 * zeta * tau) / (lmbda * k_sys)
+            ti = 2 * zeta * tau
+            td = tau / (2 * zeta)
+
+        # 5. Final discretization for the PID class
+        # Convert continuous gains to the discrete variables used in control()
+        self.ki = (self.kp / ti) * self.dt
+        self.kd = (self.kp * td) / self.dt
 
     def _control(self) -> np.ndarray:
         # PID control with fixed gains
