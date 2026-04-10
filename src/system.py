@@ -1,11 +1,11 @@
-from dataclasses import dataclass
-from abc import ABC, abstractmethod
 import os
 import time
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import final
 
-import scipy
 import numpy as np
+import scipy
 from numpy.random import MT19937, RandomState, SeedSequence
 
 rs = RandomState(MT19937(SeedSequence(42)))

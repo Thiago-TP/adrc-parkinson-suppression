@@ -1,9 +1,6 @@
 import yaml
-from control_strategies import (
-    open_loop,
-    pid,
-    adrc
-)
+
+from control_strategies import adrc, open_loop, pid
 from plots import Plots
 from system import ModelParameters
 

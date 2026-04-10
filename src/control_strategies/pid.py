@@ -1,5 +1,6 @@
 import numpy as np
-from system import System, ModelParameters, InitialConditions
+
+from system import InitialConditions, ModelParameters, System
 
 
 class PIDControl(System):
@@ -8,24 +9,27 @@ class PIDControl(System):
         name: str,
         params: ModelParameters,
         ic: InitialConditions,
+        amplitude_voluntary: float = 1.0,
         kp: float = 2.0,
         ki: float = 4.0,
         kd: float = 0.42,
-        amplitude_voluntary: float = 1.0,
         manual: bool = False,
-        slow_factor: float = 5.0
+        slow_factor: float = 5.0,
     ) -> None:
-        super().__init__(name, params, ic,
+        super().__init__(name,
+                         params,
+                         ic,
                          amplitude_voluntary=amplitude_voluntary)
-
+        self.kp, self.ki, self.kd = 0.0, 0.0, 0.0
         if manual:
             # Proportional, integral, derivative gains
             self.kp = kp
-            self.ki = ki * self.dt
-            self.kd = kd / self.dt
+            self.ki = ki
+            self.kd = kd
         else:
+            if np.isclose(self.j, np.zeros((3, 3))).all():
+                self._set_dynamics()
             # Compute the PID gains using IMC
-            self._set_dynamics()
             self._calculate_imc_pid_gains(slow_factor)
 
         # Errors for calculating control
@@ -39,7 +43,7 @@ class PIDControl(System):
     def _calculate_imc_pid_gains(self, slow_factor: float = 5.0) -> None:
         """
         PID IMC Tuning:
-        Detects if poles are real or complex and 
+        Detects if poles are real or complex and
         applies the appropriate synthesis formula for theta3.
         """
         # 1. Physical parameters from the pre-calculated matrices
@@ -83,8 +87,8 @@ class PIDControl(System):
 
         # 5. Final discretization for the PID class
         # Convert continuous gains to the discrete variables used in control()
-        self.ki = (self.kp / ti) * self.dt
-        self.kd = (self.kp * td) / self.dt
+        self.ki = self.kp / ti
+        self.kd = self.kp * td
 
     def _control(self) -> np.ndarray:
         # PID control with fixed gains
@@ -102,8 +106,12 @@ class PIDControl(System):
             self.theta_filtered[-1][2]
         self.error_delta = self.error_control - self.error_previous
 
-        u3 = np.dot([self.kp, self.ki, self.kd],
-                    [self.error_control, self.error_sum, self.error_delta])
+        u3 = np.dot(
+            [self.kp, self.ki, self.kd],
+            [self.error_control,
+             self.error_sum * self.dt,
+             self.error_delta / self.dt],
+        )
 
         self.error_sum += self.error_control
         self.error_previous = self.error_control
