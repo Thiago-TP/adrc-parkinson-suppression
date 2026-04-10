@@ -126,6 +126,7 @@ Edit [configs.yaml](configs.yaml) to modify:
 ├── docs/                                 # Documentation
 │   └── literature_review/                # Background research
 └── LICENSE
+```
 
 ### Numeric Results
 Simulation results are saved as NumPy `.npz` files in `results/runs/`:
