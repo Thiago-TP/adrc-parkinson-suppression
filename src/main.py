@@ -1,18 +1,15 @@
 import yaml
 
 from control_strategies import adrc, open_loop, pid
-from plots import Plots
 from system import ModelParameters
 
 
 def main(
     num_simulations: int,
-    plot_nominal: bool = False,
     amplitude_voluntary: float = 1.0
 ) -> None:
     """
-    Main function to run the simulations and
-    generate plots for different control strategies.
+    Main function to run and persist simulations.
 
     Parameters
     ----------
@@ -22,9 +19,6 @@ def main(
         for models with parameters sampled from the specified intervals.
         A properly formatted configs.yaml file is required to specify
         nominal parameters and stiffness uncertainty intervals.
-    plot_nominal : bool, optional
-        Whether to plot the nominal model results, i.e. first run's results.
-        Defaults to False.
     amplitude_voluntary : float, optional
         Amplitude of the voluntary torque profile. Defaults to 1.0.
     """
@@ -39,27 +33,28 @@ def main(
     # Load initial conditions
     ic = tuple(cfgs["initial_conditions"].values())
 
+    # Shared arguments across control strategies
+    _shared = {
+        "params": parameters,
+        "ic": ic,
+        "amplitude_voluntary": amplitude_voluntary
+    }
+
     # Run nominal model with different control strategies
     no_control = open_loop.OpenLoopControl(
-        "open_loop",
-        parameters,
-        ic,
-        amplitude_voluntary=amplitude_voluntary
+        name="open_loop",
+        **_shared
     )
     pid_control = pid.PIDControl(
-        "pid",
-        parameters,
-        ic,
-        amplitude_voluntary=amplitude_voluntary
+        name="pid",
+        **_shared
     )
     adr_control = adrc.ADRControl(
-        "adrc",
-        parameters,
-        ic,
-        amplitude_voluntary=amplitude_voluntary
+        name="adrc",
+        **_shared
     )
 
-    print("Running nominal model simulations...")
+    print("\nRunning nominal model simulations...")
 
     controls = [
         adr_control,
@@ -69,14 +64,6 @@ def main(
 
     for control in controls:
         control.simulate_system()
-
-        if plot_nominal:
-            plots = Plots(control)
-            plots.plot_time_response()
-            plots.plot_control()
-
-    if plot_nominal:
-        plots.plot_torque_profiles()
 
     # Remaining runs with parameters sampled from uniform intervals
     print(
@@ -98,11 +85,9 @@ def main(
 if __name__ == "__main__":
     main(
         num_simulations=1,
-        plot_nominal=True,
         amplitude_voluntary=0.0
     )
     main(
         num_simulations=1,
-        plot_nominal=True,
         amplitude_voluntary=1.0
     )

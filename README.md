@@ -12,7 +12,7 @@ Parkinson's disease is characterized by involuntary tremors that significantly i
 - **Biomechanical arm model**: 3-DOF system (shoulder, elbow, wrist) with realistic parameters
 - **Parameter uncertainty**: Stiffness intervals model inter-individual variability
 - **"Monte Carlo" simulations**: Evaluate controller robustness across parameter variations
-- **Comprehensive visualization**: Time response, control input, and comparative plots
+- **Postprocessed visualization**: Generate figures from saved numeric outputs
 
 ## System Model
 
@@ -72,14 +72,26 @@ cd src
 python main.py
 ```
 
+This step only writes numeric `.npz` outputs to `results/`.
+
+### Postprocessing Results
+
+Generate plots and metrics tables from the saved numeric results:
+
+```bash
+cd src
+python postprocessing/postprocess.py
+```
+
+Figures are saved to `results/figures/` and metrics tables are saved to `results/metrics/`.
+
 **Main function parameters:**
 - `num_simulations` (int): Total number of simulation runs (1 nominal + n-1 randomized)
-- `plot_nominal` (bool): Whether to generate plots for nominal model results
 - `amplitude_voluntary` (float): Amplitude of voluntary torque profile (default: 1.0)
 
 **Example:**
 ```python
-main(num_simulations=50, plot_nominal=True, amplitude_voluntary=1.5)
+main(num_simulations=50, amplitude_voluntary=1.5)
 ```
 
 ### Configuration
@@ -97,25 +109,39 @@ Edit [configs.yaml](configs.yaml) to modify:
 ├── src/
 │   ├── main.py                           # Main simulation entry point
 │   ├── system.py                         # Base system class and dynamics
-│   ├── plots.py                          # Visualization utilities
 │   ├── requirements.txt                  # Python dependencies
 │   ├── control_strategies/               # Control implementations
 │   │   ├── adrc.py                       # ADRC controller
 │   │   ├── pid.py                        # PID controller
 │   │   └── open_loop.py                  # Open-loop baseline
+│   ├── postprocessing/                   # Results postprocessing and visualization
+│   │   ├── postprocess.py                # Main postprocessing entry point
+│   │   ├── plots.py                      # Plotting utilities
+│   │   └── metrics.py                    # Metrics computation and CSV output
 │   └── tremor_estimation_strategies/     # Literature review methods
-├── results/                              # Simulation output (.npz files)
+├── results/
+│   ├── runs/                             # Numeric simulation output (.npz files)
+│   ├── figures/                          # Generated plot files (.pdf)
+│   └── metrics/                          # Generated metrics tables (.csv)
 ├── docs/                                 # Documentation
 │   └── literature_review/                # Background research
 └── LICENSE
-```
 
-## Output Files
-
-Simulation results are saved as NumPy `.npz` files in the `results/` directory:
+### Numeric Results
+Simulation results are saved as NumPy `.npz` files in `results/runs/`:
 - `adrc_amplitude_{X}.npz`
 - `pid_amplitude_{X}.npz`
 - `open_loop_amplitude_{X}.npz`
+
+Each file contains state trajectories and control inputs across all simulation runs.
+
+### Postprocessed Output
+Running the postprocessing script generates:
+- **Figures**: PDF plots in `results/figures/`
+- **Metrics**: CSV tables with performance metrics (TPSR, ASR, etc.) in `results/metrics/`
+
+> [!NOTE]
+> PDFs are further separated by size of amplitude given to voluntary torque and control strategy employed (or lack thereof).
 
 Each file contains state trajectories and control inputs across all simulation runs.
 
@@ -135,8 +161,8 @@ See [src/requirements.txt](src/requirements.txt) for exact versions.
 ```python
 from src.main import main
 
-# Run 10 simulations with nominal model plots
-main(num_simulations=10, plot_nominal=True)
+# Run 10 simulations and save numeric outputs
+main(num_simulations=10)
 ```
 
 ### Custom Amplitude
@@ -147,11 +173,9 @@ main(num_simulations=50, amplitude_voluntary=1.5)
 
 ## Results Interpretation
 
-The simulations generate:
-1. **Time response plots**: State trajectories (joint angles and velocities)
-2. **Control inputs**: Torque profiles for each control strategy
-3. **Comparison plots**: Performance metrics across all three controllers
-4. **Monte Carlo results**: Robustness statistics across parameter variations
+The simulations generate numeric outputs (`.npz`) containing time vectors,
+joint responses, estimated voluntary responses, control signals, and torque
+profiles for each run. Plots are generated as a separate postprocessing step.
 
 ## References
 

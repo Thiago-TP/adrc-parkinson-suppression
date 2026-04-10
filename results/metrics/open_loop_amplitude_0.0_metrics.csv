@@ -1,0 +1,2 @@
+run_key,tpsr_percent,asr_percent,rmse,response_entropy,control_signal_power,ise,iae,itae,itse
+nominal_run,0.0,0.0,0.4737512054389997,5.567838203640321,0.0,1.346836235357157,3.1688643654911623,9.979699828522582,4.319769147117324

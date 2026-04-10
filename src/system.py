@@ -1,7 +1,7 @@
 import os
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import final
 
 import numpy as np
@@ -86,6 +86,7 @@ class System(ABC):
         t1: float = 6.0,
         dt: float = 1e-3,
         amplitude_voluntary: float = 1.0,
+        savedir: str = "results/runs"
     ) -> None:
 
         # Model name
@@ -119,7 +120,7 @@ class System(ABC):
         )
 
         # Control signal history
-        self.u: list[np.ndarray] = [np.array([0.0, 0.0, 0.0])]
+        self.u: list[np.ndarray] | None = None
 
         # Time response
         self.theta: list[np.ndarray] | None = None
@@ -148,6 +149,8 @@ class System(ABC):
         )
 
         # Results storage across runs
+        self.suffix = f"{self.name}_amplitude_{self.amplitude_voluntary}"
+        self.savedir = savedir
         self.results = {}
 
         return
@@ -164,6 +167,7 @@ class System(ABC):
         # Initializations
         x = np.array(self.initial_conditions)
         x_v = np.array(self.initial_conditions)
+        self.u = [np.array([0.0, 0.0, 0.0])]
         self.x_hat = [x]
         self.theta = [self.c_ss @ x]
         self.theta_v = [self.c_ss @ x_v]
@@ -215,24 +219,29 @@ class System(ABC):
             key = "nominal_run"
         else:
             key = f"non_nominal_run_{len(self.results)}"
+
         self.results[key] = {
-            "time": self.t,
-            "theta": self.theta,
-            "theta_v": self.theta_v,
-            "theta_v_hat": self.theta_v_hat,
-            "parameters": self.params,
+            "time": self.t.copy(),
+            "theta": np.asarray(self.theta),
+            "theta_v": np.asarray(self.theta_v),
+            "theta_v_hat": np.asarray(self.theta_v_hat),
+            "u": np.asarray(self.u),
+            "tau_v": np.asarray([self.tau_v(t) for t in self.t]),
+            "tau_i": np.asarray([self.tau_i(t) for t in self.t]),
+            "amplitude_voluntary": self.amplitude_voluntary,
+            "parameters": asdict(self.params),
         }
 
         return
 
     def save_results(self) -> None:
         """
-        Dumps simulation results across runs to a npz file in folder result.
+        Dumps simulation results across runs to a npz file in savedir.
         Overwrites file if npz already existed.
         """
-        os.makedirs("results", exist_ok=True)
+        os.makedirs(self.savedir, exist_ok=True)
         np.savez_compressed(
-            f"results/{self.name}_amplitude_{self.amplitude_voluntary}.npz",
+            f"{self.savedir}/{self.suffix}.npz",
             **self.results
         )
         return
