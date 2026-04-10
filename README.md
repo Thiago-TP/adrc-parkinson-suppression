@@ -72,7 +72,7 @@ cd src
 python main.py
 ```
 
-This step only writes numeric `.npz` outputs to `results/`.
+This step only writes numeric `.npz` outputs to `results/runs/`.
 
 ### Postprocessing Results
 
@@ -143,8 +143,6 @@ Running the postprocessing script generates:
 
 > [!NOTE]
 > PDFs are further separated by size of amplitude given to voluntary torque and control strategy employed (or lack thereof).
-
-Each file contains state trajectories and control inputs across all simulation runs.
 
 ## Dependencies
 

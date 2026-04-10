@@ -209,3 +209,8 @@ __marimo__/
 # Other
 log.txt
 papers/
+
+# Generated simulation results (outputs from running scripts)
+results/runs/
+results/figures/
+results/metrics/
