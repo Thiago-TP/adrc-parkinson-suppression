@@ -5,7 +5,6 @@ from dataclasses import asdict, dataclass
 from typing import final
 
 import numpy as np
-import scipy
 from numpy.random import MT19937, RandomState, SeedSequence
 
 rs = RandomState(MT19937(SeedSequence(42)))
@@ -72,9 +71,8 @@ class System(ABC):
         Final time for the simulation in seconds, by default 6.0.
     dt: float, optional
         Time step for the simulation in seconds, by default 1e-3.
-    noise_std: float, optional
-        Standard deviation of the measurement noise in radians,
-        by default 5 * np.pi / 180 (5°).
+    savedir: str, optional
+        Directory where results will be saved, by default "results/runs".
     """
 
     def __init__(
@@ -139,15 +137,6 @@ class System(ABC):
         self.params = params
         self._set_model()
 
-        # Set voluntary motion estimator
-        self.butter_sos = scipy.signal.butter(
-            N=1,
-            Wn=5.0,
-            fs=self.fs,
-            btype="low",
-            output="sos"
-        )
-
         # Results storage across runs
         self.suffix = f"{self.name}_amplitude_{self.amplitude_voluntary}"
         self.savedir = savedir
@@ -155,6 +144,7 @@ class System(ABC):
 
         return
 
+    @final
     def simulate_system(self) -> None:
 
         print(f"Simulating system {self.name}...")
@@ -191,7 +181,7 @@ class System(ABC):
             self.theta.append(self.c_ss @ x)
 
             # Update estimation of voluntary response
-            self.theta_v_hat = self._estimate_voluntary()
+            self._estimate_voluntary()
 
             # Update estimation of state
             theta_dot = np.diff(self.theta, axis=0)
@@ -234,6 +224,7 @@ class System(ABC):
 
         return
 
+    @final
     def save_results(self) -> None:
         """
         Dumps simulation results across runs to a npz file in savedir.
@@ -245,15 +236,6 @@ class System(ABC):
             **self.results
         )
         return
-
-    def _estimate_voluntary(self) -> list[np.ndarray] | None:
-        # Apply the filter to each column of theta
-        try:
-            return scipy.signal.sosfiltfilt(
-                self.butter_sos, self.theta, axis=0,
-            )
-        except ValueError:
-            return self.theta
 
     @final
     def _set_model(self) -> None:
@@ -337,4 +319,14 @@ class System(ABC):
 
     @abstractmethod
     def _control(self) -> np.ndarray:
+        pass
+
+    @abstractmethod
+    def _estimate_voluntary(self) -> None:
+        """
+        Update the estimation of the voluntary portion of the response.
+        Estimators change between control strategies
+        and must be implemented in each subclass.
+        Must change attribute self.theta_v_hat to be used in the control law.
+        """
         pass

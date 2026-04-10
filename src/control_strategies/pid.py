@@ -1,3 +1,4 @@
+import scipy
 import numpy as np
 
 from system import InitialConditions, ModelParameters, System
@@ -20,6 +21,16 @@ class PIDControl(System):
                          params,
                          ic,
                          amplitude_voluntary=amplitude_voluntary)
+
+        # Set voluntary motion estimator
+        self.butter_sos = scipy.signal.butter(
+            N=1,
+            Wn=5.0,
+            fs=self.fs,
+            btype="low",
+            output="sos"
+        )
+
         self.kp, self.ki, self.kd = 0.0, 0.0, 0.0
         if manual:
             # Proportional, integral, derivative gains
@@ -118,3 +129,12 @@ class PIDControl(System):
         self.u.append(np.array([0.0, 0.0, u3]))
 
         return self.u[-1]
+
+    def _estimate_voluntary(self) -> None:
+        # Zero-phase low-pass Butterworth filter to estimate voluntary response
+        try:
+            self.theta_v_hat = scipy.signal.sosfiltfilt(
+                self.butter_sos, self.theta, axis=0,
+            )
+        except ValueError:
+            self.theta_v_hat = self.theta.copy()
