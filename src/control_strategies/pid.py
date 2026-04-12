@@ -101,8 +101,7 @@ class PIDControl(System):
             ti = 2 * zeta * tau
             td = tau / (2 * zeta)
 
-        # 5. Final discretization for the PID class
-        # Convert continuous gains to the discrete variables used in control()
+        # 5. Final scaling of integral and derivative gains
         self.ki = self.kp / ti
         self.kd = self.kp * td
 
@@ -110,13 +109,6 @@ class PIDControl(System):
         # PID control with fixed gains
         # For more details, check out
         # https://alphaville.github.io/qub/pid-101/#/
-
-        if self.theta_v_hat is None or self.theta is None:
-            # If the system hasn't been simulated yet, return zero control
-            raise ValueError(
-                "System state is not initialized. "
-                "Run simulate_system() before calling _control()."
-            )
 
         self.error_control = self.theta_v_hat[k, 2] - self.theta[k, 2]
         self.error_delta = self.error_control - self.error_previous

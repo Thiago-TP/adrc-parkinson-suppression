@@ -116,10 +116,14 @@ class System(ABC):
         self.x: np.ndarray = np.zeros((len(self.t), 6))
         self.x_v: np.ndarray = np.zeros((len(self.t), 6))
 
-        # Time response: observation, true voluntary, and estimated voluntary
+        # Time response:
+        # observation, true voluntary, estimated voluntary,
+        # true tremor, estimated tremor
         self.theta: np.ndarray = np.zeros((len(self.t), 3))
         self.theta_v: np.ndarray = np.zeros((len(self.t), 3))
         self.theta_v_hat: np.ndarray = np.zeros((len(self.t), 3))
+        self.theta_i: np.ndarray = np.zeros((len(self.t), 3))
+        self.theta_i_hat: np.ndarray = np.zeros((len(self.t), 3))
 
         # Model dynamics parameters
         self.j: np.ndarray = np.zeros((3, 3))  # inertia
@@ -141,6 +145,8 @@ class System(ABC):
         self.theta[0] = self.c_ss @ self.x[0]
         self.theta_v[0] = self.c_ss @ self.x_v[0]
         self.theta_v_hat[0] = self.theta[0]
+        self.theta_i[0] = np.zeros(3)
+        self.theta_i_hat[0] = np.zeros(3)
 
         # Results storage across runs
         self.suffix: str = f"{self.name}_amplitude_{self.amplitude_voluntary}"
@@ -225,6 +231,8 @@ class System(ABC):
             "theta": self.theta,
             "theta_v": self.theta_v,
             "theta_v_hat": self.theta_v_hat,
+            "theta_i": self.theta_i,
+            "theta_i_hat": self.theta_i_hat,
             "u": self.u,
             "tau_v": np.array([self._tau_v(t) for t in self.t]),
             "tau_i": np.array([self._tau_i(t) for t in self.t]),

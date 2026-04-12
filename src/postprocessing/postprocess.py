@@ -23,9 +23,8 @@ def generate_plots(
         control_files = {
             "adrc": results_path / f"adrc_amplitude_{amplitude}.data",
             "pid": results_path / f"pid_amplitude_{amplitude}.data",
-            "open_loop": (
-                results_path / f"open_loop_amplitude_{amplitude}.data"
-            ),
+            "pi_gallego": results_path / f"pi_gallego_amplitude_{amplitude}.data",  # noqa: E501
+            "open_loop": results_path / f"open_loop_amplitude_{amplitude}.data",  # noqa: E501
         }
 
         for control_name, file_path in control_files.items():
@@ -55,9 +54,8 @@ def generate_metrics_tables(
         control_files = {
             "adrc": results_path / f"adrc_amplitude_{amplitude}.data",
             "pid": results_path / f"pid_amplitude_{amplitude}.data",
-            "open_loop": (
-                results_path / f"open_loop_amplitude_{amplitude}.data"
-            ),
+            "pi_gallego": results_path / f"pi_gallego_amplitude_{amplitude}.data",  # noqa: E501
+            "open_loop": results_path / f"open_loop_amplitude_{amplitude}.data",  # noqa: E501
         }
 
         missing = [

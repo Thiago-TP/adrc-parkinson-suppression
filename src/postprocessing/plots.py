@@ -16,6 +16,7 @@ COLORS = {
     "open_loop": "#D8C303",
     "pid": "#FF3867",
     "adrc": "#1CA1DA",
+    "pi_gallego": "#2E8B57",
 }
 
 SAVEFIG_ARGS = {  # slightly better than tight_layout
@@ -32,6 +33,8 @@ class Plots:
                  theta: np.ndarray,
                  theta_v: np.ndarray,
                  theta_v_hat: np.ndarray,
+                 theta_i: np.ndarray,
+                 theta_i_hat: np.ndarray,
                  u: np.ndarray,
                  tau_v: np.ndarray,
                  tau_i: np.ndarray,
@@ -44,6 +47,8 @@ class Plots:
         self.theta = theta
         self.theta_v = theta_v
         self.theta_v_hat = theta_v_hat
+        self.theta_i = theta_i
+        self.theta_i_hat = theta_i_hat
         self.u = u
         self.tau_v = tau_v
         self.tau_i = tau_i

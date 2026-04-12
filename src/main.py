@@ -1,6 +1,6 @@
 import yaml
 
-from control_strategies import adrc, open_loop, pid
+from control_strategies import adrc, open_loop, pi_gallego, pid
 from system import ModelParameters
 
 
@@ -33,24 +33,40 @@ def main(
     # Load initial conditions
     ic = tuple(cfgs["initial_conditions"].values())
 
-    # Shared arguments across control strategies
-    _shared = {
-        "params": parameters,
-        "ic": ic,
-        "amplitude_voluntary": amplitude_voluntary
-    }
-
     # Run nominal model with different control strategies
-    no_control = open_loop.OpenLoopControl(name="open_loop", **_shared)
-    pid_control = pid.PIDControl(name="pid", **_shared, slow_factor=5.0)
-    adr_control = adrc.ADRControl(name="adrc", **_shared)
+    no_control = open_loop.OpenLoopControl(
+        name="open_loop",
+        params=parameters,
+        ic=ic,
+        amplitude_voluntary=amplitude_voluntary
+    )
+    pid_control = pid.PIDControl(
+        name="pid",
+        params=parameters,
+        ic=ic,
+        amplitude_voluntary=amplitude_voluntary,
+        slow_factor=5.0
+    )
+    adr_control = adrc.ADRControl(
+        name="adrc",
+        params=parameters,
+        ic=ic,
+        amplitude_voluntary=amplitude_voluntary
+    )
+    pi_gallego_control = pi_gallego.GallegoPIControl(
+        name="pi_gallego",
+        params=parameters,
+        ic=ic,
+        amplitude_voluntary=amplitude_voluntary
+    )
 
     print("\nRunning nominal model simulations...")
 
     controls = [
         adr_control,
         pid_control,
-        no_control
+        pi_gallego_control,
+        no_control,
     ]
 
     for control in controls:
@@ -70,6 +86,7 @@ def main(
     # Save results across runs to npz files in results folder
     adr_control.save_results()
     pid_control.save_results()
+    pi_gallego_control.save_results()
     no_control.save_results()
 
 
