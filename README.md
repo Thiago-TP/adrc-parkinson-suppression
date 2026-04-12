@@ -83,7 +83,7 @@ cd src
 python postprocessing/postprocess.py
 ```
 
-Figures are saved to `results/figures/` and metrics tables are saved to `results/metrics/`.
+Figures are saved to `results/plots/` and metrics tables are saved to `results/metrics/`.
 
 **Main function parameters:**
 - `num_simulations` (int): Total number of simulation runs (1 nominal + n-1 randomized)
@@ -138,7 +138,7 @@ Each file contains state trajectories and control inputs across all simulation r
 
 ### Postprocessed Output
 Running the postprocessing script generates:
-- **Figures**: PDF plots in `results/figures/`
+- **Plots**: PDF plots in `results/plots/`
 - **Metrics**: CSV tables with performance metrics (TPSR, ASR, etc.) in `results/metrics/`
 
 > [!NOTE]

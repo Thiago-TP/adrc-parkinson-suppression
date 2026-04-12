@@ -212,5 +212,5 @@ papers/
 
 # Generated simulation results (outputs from running scripts)
 results/runs/
-results/figures/
+results/plots/
 results/metrics/
