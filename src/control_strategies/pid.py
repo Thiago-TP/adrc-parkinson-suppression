@@ -110,7 +110,8 @@ class PIDControl(System):
         # For more details, check out
         # https://alphaville.github.io/qub/pid-101/#/
 
-        self.error_control = self.theta_v_hat[k, 2] - self.theta[k, 2]
+        # Changed from theta_v_hat to theta_v for the control error calculation
+        self.error_control = self.theta_v[k, 2] - self.theta[k, 2]
         self.error_delta = self.error_control - self.error_previous
 
         u3 = np.dot(
