@@ -25,6 +25,7 @@ def objective_function(gains: list[float], parameters: ModelParameters,
         kp=kp,
         ki=ki,
         kd=kd,
+        pid_tuning=True,
     )
 
     # 2. Execute the simulation, ignoring overflow warnings

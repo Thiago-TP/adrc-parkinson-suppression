@@ -16,6 +16,7 @@ class PIDControl(System):
         kd: float | None = None,
         manual: bool = False,
         slow_factor: float | None = None,
+        pid_tuning: bool = False,
     ) -> None:
         super().__init__(name,
                          params,
@@ -47,6 +48,8 @@ class PIDControl(System):
                 )
             # Compute the PID gains using IMC
             self._calculate_imc_pid_gains(slow_factor)
+
+        self.pid_tuning = pid_tuning
 
         # Errors for calculating control
         self.error_control = 0.0
@@ -111,7 +114,10 @@ class PIDControl(System):
         # https://alphaville.github.io/qub/pid-101/#/
 
         # Changed from theta_v_hat to theta_v for the control error calculation
-        self.error_control = self.theta_v[k, 2] - self.theta[k, 2]
+        if self.pid_tuning:
+            self.error_control = self.theta_v[k, 2] - self.theta[k, 2]
+        else:
+            self.error_control = self.theta_v_hat[k, 2] - self.theta[k, 2]
         self.error_delta = self.error_control - self.error_previous
 
         u3 = np.dot(
