@@ -1,6 +1,12 @@
 import yaml
 
-from control_strategies import adrc_ebmflc, eadrc, open_loop, pi_gallego, pid
+from control_strategies import (
+    eadrc_ebmflc,
+    eadrc_zplp,
+    open_loop,
+    pi_gallego,
+    pid,
+)
 from system import ModelParameters
 
 
@@ -47,14 +53,14 @@ def main(
         amplitude_voluntary=amplitude_voluntary,
         slow_factor=5.0
     )
-    eadr_control = eadrc.EADRControl(
-        name="eadrc",
+    eadr_zplp_control = eadrc_zplp.EADRC_ZPLP(
+        name="eadrc_zplp",
         params=parameters,
         ic=ic,
         amplitude_voluntary=amplitude_voluntary
     )
-    adr_ebmflc_control = adrc_ebmflc.ADRC_EBMFLC(
-        name="adrc_ebmflc",
+    eadr_ebmflc_control = eadrc_ebmflc.EADRC_EBMFLC(
+        name="eadrc_ebmflc",
         params=parameters,
         ic=ic,
         amplitude_voluntary=amplitude_voluntary
@@ -69,8 +75,8 @@ def main(
     print("\nRunning nominal model simulations...")
 
     controls = [
-        eadr_control,
-        adr_ebmflc_control,
+        eadr_zplp_control,
+        eadr_ebmflc_control,
         pid_control,
         pi_gallego_control,
         no_control,
@@ -91,8 +97,8 @@ def main(
             control.simulate_system()
 
     # Save results across runs to npz files in results folder
-    eadr_control.save_results()
-    adr_ebmflc_control.save_results()
+    eadr_zplp_control.save_results()
+    eadr_ebmflc_control.save_results()
     pid_control.save_results()
     pi_gallego_control.save_results()
     no_control.save_results()

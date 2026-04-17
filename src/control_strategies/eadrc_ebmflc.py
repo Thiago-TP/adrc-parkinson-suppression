@@ -3,9 +3,9 @@ import numpy as np
 from system import InitialConditions, ModelParameters, System
 
 
-class ADRC_EBMFLC(System):
+class EADRC_EBMFLC(System):
     """
-    ADRC-based PD control for Parkinson's tremor suppression,
+    EADRC-based PD control for Parkinson's tremor suppression,
     using the EBMFLC algorithm for tremor/voluntary motion estimation.
 
     Based on the work of Qi et al. (2024):
@@ -25,7 +25,7 @@ class ADRC_EBMFLC(System):
         params: ModelParameters,
         ic: InitialConditions,
         amplitude_voluntary: float = 1.0,
-        omega_c: float = 20,
+        omega_c: float = 20,  # 50 in the paper
         n: int = 100,  # not given in the paper
         mu: float = 0.005,  # not given in the paper
         total_bandwidth: tuple[float, float] = (0, 12),
@@ -60,7 +60,7 @@ class ADRC_EBMFLC(System):
 
         self.ws = 2 * np.pi * freqs
 
-        self.d = self.fs * window_time
+        self.d = self.fs * window_time  # fs = 160 Hz in the paper
         self.p = max(0, min(1, minimum_impact)) ** (1 / self.d)
 
         # Proportional, derivative gains

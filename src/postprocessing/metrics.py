@@ -116,18 +116,15 @@ def _compute_metrics(
 
 def metrics_table_for_file(
     path: Path,
-    baseline_payloads: dict[str, dict[str, np.ndarray | float]] | None,
+    baseline: Path,
 ) -> list[dict[str, str | float]]:
     payloads = run_payloads(path)
+    baseline_payloads = run_payloads(baseline)
     rows: list[dict[str, str | float]] = []
-
     for run_key in _sorted_run_keys(list(payloads.keys())):
         metrics = _compute_metrics(
             run_payload=payloads[run_key],
-            baseline_payload=(
-                None if baseline_payloads is None
-                else baseline_payloads.get(run_key)
-            ),
+            baseline_payload=baseline_payloads.get(run_key),
         )
         rows.append({"run_key": run_key, **metrics})
 

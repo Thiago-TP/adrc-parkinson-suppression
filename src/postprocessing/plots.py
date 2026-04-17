@@ -15,11 +15,11 @@ plt.rcParams.update({
 })
 
 COLORS = {
+    "eadrc_ebmflc": "#FF7F00",
+    "eadrc_zplp": "#1CA1DA",
     "open_loop": "#D8C303",
-    "pid": "#FF3867",
-    "eadrc": "#1CA1DA",
-    "adrc_ebmflc": "#FF7F00",
     "pi_gallego": "#2E8B57",
+    "pid": "#FF3867",
 }
 
 SAVEFIG_ARGS = {  # slightly better than tight_layout
@@ -106,7 +106,7 @@ class Plots:
 
         plt.figure(figsize=(10, 3))
 
-        plt.plot(self.t, theta[:, 2], color=COLORS[self.control_name], label=r"$\theta_3$")  # noqa: E501
+        plt.plot(self.t, theta[:, 2], color=COLORS.get(self.control_name, "black"), label=r"$\theta_3$")  # noqa: E501
         plt.plot(self.t, theta_v3_hat[:, 2], color="#BD1AEA", label=r"$\widehat{\theta}_{v_3}$")  # noqa: E501
         plt.plot(self.t, theta_v[:, 2], linestyle="--", color="black", label=r"$\theta_{v_3}$")  # noqa: E501
         plt.ylabel(r"Palm angle [\textdegree]")
@@ -128,7 +128,7 @@ class Plots:
         # Plot control signal applied to wrist joint
 
         plt.figure(figsize=(10, 3))
-        plt.plot(self.t, self.u[:, 2], color=COLORS[self.control_name])
+        plt.plot(self.t, self.u[:, 2], color=COLORS.get(self.control_name, "black"))  # noqa: E501
         plt.ylabel(r"$u_3$ [Nm]")
         plt.xlim(*self.xlim)
         plt.grid()
@@ -155,7 +155,7 @@ class Plots:
         dft_theta_v3 = np.abs(np.fft.rfft(theta_v3))
 
         plt.figure(figsize=(10, 3))
-        plt.plot(freqs, dft_theta3, color=COLORS[self.control_name], label=r"$\theta_3$")  # noqa: E501
+        plt.plot(freqs, dft_theta3, color=COLORS.get(self.control_name, "black"), label=r"$\theta_3$")  # noqa: E501
         plt.plot(freqs, dft_theta_v3_hat, color="#BD1AEA", label=r"$\widehat{\theta}_{v_3}$")  # noqa: E501
         plt.plot(freqs, dft_theta_v3, linestyle="--", color="black", label=r"$\theta_{v_3}$")  # noqa: E501
         plt.ylabel("DFT Magnitude")
@@ -183,7 +183,7 @@ class Plots:
         _, psd_theta_v3 = scipy.signal.welch(theta_v3, fs=self.fs)
 
         plt.figure(figsize=(10, 3))
-        plt.semilogy(freqs, psd_theta3, color=COLORS[self.control_name], label=r"$\theta_3$")  # noqa: E501
+        plt.semilogy(freqs, psd_theta3, color=COLORS.get(self.control_name, "black"), label=r"$\theta_3$")  # noqa: E501
         plt.semilogy(freqs, psd_theta_v3_hat, color="#BD1AEA", label=r"$\widehat{\theta}_{v_3}$")  # noqa: E501
         plt.semilogy(freqs, psd_theta_v3, linestyle="--", color="black", label=r"$\theta_{v_3}$")  # noqa: E501
         plt.ylabel("PSD [rad$^2$/Hz]")
