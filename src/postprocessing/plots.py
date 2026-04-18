@@ -1,6 +1,7 @@
 import os
 import pickle
 
+import blosc
 import numpy as np
 import scipy
 from matplotlib import pyplot as plt
@@ -239,7 +240,9 @@ def plot_from_data(
     run_key: str = "nominal_run",
 ) -> None:
     with open(data_path, "rb") as f:
-        data = pickle.load(f)
+        compressed_pickle = f.read()
+        depressed_pickle = blosc.decompress(compressed_pickle)
+        data = pickle.loads(depressed_pickle)
 
     print("\nPlotting results in file:", data_path)
 

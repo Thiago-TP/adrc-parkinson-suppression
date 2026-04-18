@@ -119,10 +119,10 @@ def main(
 
 if __name__ == "__main__":
     main(
-        num_simulations=10,
+        num_simulations=2,
         amplitude_voluntary=0.0
     )
     main(
-        num_simulations=10,
+        num_simulations=2,
         amplitude_voluntary=1.0
     )

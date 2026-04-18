@@ -3,6 +3,7 @@ import pickle
 import re
 from pathlib import Path
 
+import blosc
 import numpy as np
 from scipy.integrate import trapezoid
 
@@ -22,8 +23,10 @@ def _sorted_run_keys(keys: list[str]) -> list[str]:
 
 def run_payloads(data_path: Path) -> dict[str, dict[str, np.ndarray | float]]:
     with open(data_path, "rb") as f:
-        payloads = pickle.load(f)
-    return payloads
+        compressed_pickle = f.read()
+        depressed_pickle = blosc.decompress(compressed_pickle)
+        data = pickle.loads(depressed_pickle)
+    return data
 
 
 def _entropy(signal: np.ndarray, bins: int = 64) -> float:
