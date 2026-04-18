@@ -132,6 +132,5 @@ class AFE_NotchControl(System):
 
         # Estimated tremor frequency update
         self.wt = self.ye3
-        print(self.wt)
 
         return

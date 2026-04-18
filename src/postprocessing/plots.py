@@ -45,7 +45,9 @@ class Plots:
                  amplitude_voluntary: float,
                  xlim: tuple[float, float] = (0, 6),
                  ylim: tuple[float, float] = (-80, 80),
-                 savedir: str = "results/plots"):
+                 savedir: str = "results/plots",
+                 **kwargs,  # add more data without changing the signature
+                 ) -> None:
         self.control_name = control_name
         self.t = time
         self.theta = theta

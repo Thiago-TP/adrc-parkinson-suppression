@@ -70,7 +70,11 @@ def main(
         params=parameters,
         ic=ic,
         amplitude_voluntary=amplitude_voluntary,
-        slow_factor=5.0
+        manual=True,
+        kp=0.0998772,
+        ki=98.7732779,
+        kd=0.040496,
+        # slow_factor=5.0  # slow factor for tuning only
     )
     no_control = open_loop.OpenLoopControl(
         name="open_loop",
@@ -115,10 +119,10 @@ def main(
 
 if __name__ == "__main__":
     main(
-        num_simulations=1,
+        num_simulations=10,
         amplitude_voluntary=0.0
     )
     main(
-        num_simulations=1,
+        num_simulations=10,
         amplitude_voluntary=1.0
     )
