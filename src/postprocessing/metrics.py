@@ -53,9 +53,7 @@ def _compute_metrics(
     theta_v = _as_float_array(run_payload["theta_v"])
     u = _as_float_array(run_payload["u"])
 
-    entropy = float(np.mean([
-        _entropy(theta[:, i]) for i in range(theta.shape[1])
-    ]))
+    entropy = float(_entropy(theta[:, 2]))
 
     err = theta - theta_v
     err_sq = np.sum(err**2, axis=1)
@@ -78,12 +76,13 @@ def _compute_metrics(
 
         tpsr = (
             100.0 * (tremor_power_bl - tremor_power) / tremor_power_bl
-            if tremor_power_bl > EPS else np.nan
+            if tremor_power_bl > EPS
+            else np.nan
         )
         asr = (
-            100.0 * (tremor_amplitude_bl - tremor_amplitude)
-            / tremor_amplitude_bl
-            if tremor_amplitude_bl > EPS else np.nan
+            100.0 * (tremor_amplitude_bl - tremor_amplitude) / tremor_amplitude_bl  # noqa: E501
+            if tremor_amplitude_bl > EPS
+            else np.nan
         )
 
     # Control signal metrics
