@@ -214,7 +214,7 @@ class Plots:
         dft_theta_v3 = np.abs(np.fft.rfft(theta_v3))
 
         plt.figure(figsize=(10, 3))
-        if self.control_name != "open_loop":
+        if self.control_name != "uncontrolled":
             plt.semilogy(
                 freqs,
                 dft_theta3,
@@ -243,7 +243,7 @@ class Plots:
         # Inlay zoom on voluntary frequencies
         # [left, bottom, width, height]
         ax_inlay = plt.axes((0.125, -0.5, 0.25, 0.4))
-        if self.control_name != "open_loop":
+        if self.control_name != "uncontrolled":
             ax_inlay.semilogy(
                 freqs,
                 dft_theta3,
@@ -296,7 +296,7 @@ class Plots:
         _, psd_theta_v3 = scipy.signal.welch(theta_v3, **welch_args)
 
         plt.figure(figsize=(10, 3))
-        if self.control_name != "open_loop":
+        if self.control_name != "uncontrolled":
             plt.semilogy(
                 freqs,
                 psd_theta3,
@@ -325,7 +325,7 @@ class Plots:
         # Inlay zoom on voluntary frequencies
         # [left, bottom, width, height]
         ax_inlay = plt.axes((0.125, -0.5, 0.25, 0.4))
-        if self.control_name != "open_loop":
+        if self.control_name != "uncontrolled":
             ax_inlay.semilogy(
                 freqs,
                 psd_theta3,
