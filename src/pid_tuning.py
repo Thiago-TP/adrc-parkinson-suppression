@@ -6,7 +6,6 @@ from scipy.optimize import differential_evolution
 
 from control_strategies import pid
 from postprocessing.metrics import _compute_metrics
-from postprocessing.plots import plot_from_data
 from system import InitialConditions, ModelParameters
 
 
@@ -45,20 +44,22 @@ def objective_function(
             # Return a very high cost if the simulation failed
             return 1e12
 
-        # 4. Check wheter the gains led to NaN or Inf values in the results, which indicates instability
+        # 4. Check wheter the gains led to NaN or Inf values in the results,
+        # which indicates instability
         theta = run_payload["theta"]
         if np.isnan(theta).any() or np.isinf(theta).any():
             # Return a very high cost to penalize unstable solutions
             return 1e12
 
-        # 5. Calculate the cost based on the performance metrics (ISE, IAE, ITAE, ITSE)
+        # 5. Calculate the cost based on the performance metrics
+        # (combination of one of more: ISE, IAE, ITAE, ITSE, TV, RMS, ISC, IAC)
         try:
             metrics = _compute_metrics(
                 run_payload=run_payload,
                 baseline_payload=None
             )
             cost = metrics["ise"] + metrics["iae"] + \
-                metrics["itae"] + metrics["itse"]
+                metrics["itse"] + metrics["itae"]
 
             # Ensure that the cost is a finite number; if not, penalize it
             if np.isnan(cost) or np.isinf(cost):
@@ -88,6 +89,7 @@ def main(amplitude_voluntary: float = 1.0) -> None:
         f"with amplitude_voluntary={amplitude_voluntary}...")
 
     # Bounds for Kp, Ki, Kd (you can adjust these based on expected ranges)
+    # For this problem, Kp and Kd are expected to be small, and Ki big.
     bounds = [(0.0, 5.0), (0.0, 100.0), (0.0, 5.0)]
 
     # Optimize the PID gains using Differential Evolution
@@ -110,34 +112,11 @@ def main(amplitude_voluntary: float = 1.0) -> None:
     print("\n" + "="*40)
     print("PID Tuning Optimization Completed!")
     print("="*40)
-    print(f"Best Kp: {best_kp:.4f}")
-    print(f"Best Ki: {best_ki:.4f}")
-    print(f"Best Kd: {best_kd:.4f}")
-    print(f"Minimum Cost (Sum of Errors): {result.fun:.4f}")
+    print(f"Best Kp: {best_kp:.7f}")
+    print(f"Best Ki: {best_ki:.7f}")
+    print(f"Best Kd: {best_kd:.7f}")
+    print(f"Minimum Cost (Sum of Errors): {result.fun:.7f}")
     print("="*40)
-
-    # Optional: Run a final simulation with best parameters and save results
-    print("\nRunning final simulation with optimized parameters to save results...")
-    best_pid = pid.PIDControl(
-        name="pid_optimized",
-        params=parameters,
-        ic=ic,
-        amplitude_voluntary=amplitude_voluntary,
-        manual=True,
-        kp=best_kp,
-        ki=best_ki,
-        kd=best_kd,
-        perfect_tracking=True,  # DE-tuned PID always has perfect tracking
-    )
-
-    # Save the results of the final simulation for post-processing
-    best_pid.simulate_system()
-    best_pid.save_results()
-
-    plot_from_data(
-        data_path="results/runs/pid_optimized_amplitude_1.0.data",
-        control_name="pid_optimized",
-    )
 
 
 if __name__ == "__main__":

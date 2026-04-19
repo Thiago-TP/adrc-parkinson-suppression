@@ -10,7 +10,8 @@ class EADRC_EBMFLC(System):
 
     Based on the work of Qi et al. (2024):
     P. Qi, J. Yang, Y. Dai, H. Zhang and J. Tong,
-    "A Novel Approach to Parkinson's Tremor Suppression: E-BMFLC and LADRC Integration,"
+    "A Novel Approach to Parkinson's Tremor Suppression:
+    E-BMFLC and LADRC Integration,"
     in IEEE Access, vol. 12, pp. 145871-145880, 2024,
     doi: 10.1109/ACCESS.2024.3424395.
 
@@ -24,7 +25,7 @@ class EADRC_EBMFLC(System):
         name: str,
         params: ModelParameters,
         ic: InitialConditions,
-        amplitude_voluntary: float = 1.0,
+        amplitude_voluntary: float,
         omega_c: float = 20,  # 50 in the paper
         n: int = 100,  # not given in the paper
         mu: float = 0.005,  # not given in the paper

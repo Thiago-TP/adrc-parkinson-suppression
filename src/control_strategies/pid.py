@@ -5,12 +5,51 @@ from system import InitialConditions, ModelParameters, System
 
 
 class PIDControl(System):
+    """
+    Proportional-Integral-Derivative (PID) control strategy.
+    The PID implemented may be adjusted manually
+    by setting the kp, ki, and kd parameters,
+    or automatically using Internal Model Control (IMC)
+    tuning rules based on the system's physical parameters.
+    For a Differential Evolution (DE)-based offline
+    optimization of the PID gains, see src/pid_tuning.py.
+    PID DE is assumed to be a best-case controller with perfect tracking
+    of voluntary motion. For PID IMC, estimation of voluntary motion
+    is done using a zero-phase low-pass Butterworth filter.
+
+    Parameters
+    ----------
+    name: str
+        Name of the control strategy.
+    params: ModelParameters
+        Model parameters for the system.
+    ic: InitialConditions
+        Initial conditions for the system.
+    amplitude_voluntary: float, optional
+        Amplitude of the voluntary motion.
+    kp: float, optional
+        Proportional gain for manual tuning, by default None.
+    ki: float, optional
+        Integral gain for manual tuning, by default None.
+    kd: float, optional
+        Derivative gain for manual tuning, by default None.
+    manual: bool, optional
+        If True, uses manual tuning with provided kp, ki, kd.
+        If False, uses IMC tuning based on system parameters, by default False.
+    slow_factor: float, optional
+        Slow factor for IMC tuning, by default None.
+        Higher values lead to slower response.
+    perfect_tracking: bool, optional
+        If True, assumes perfect tracking of voluntary motion (DE tuning only),
+        by default False.
+    """
+
     def __init__(
         self,
         name: str,
         params: ModelParameters,
         ic: InitialConditions,
-        amplitude_voluntary: float = 1.0,
+        amplitude_voluntary: float,
         kp: float | None = None,
         ki: float | None = None,
         kd: float | None = None,

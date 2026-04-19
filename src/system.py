@@ -14,6 +14,11 @@ rs = RandomState(MT19937(SeedSequence(42)))
 
 @dataclass(frozen=False)
 class ModelParameters:
+    """
+    Class to hold the model parameters for the system dynamics.
+    Inertia values remain constant, while stiffness values
+    are resampled across runs from their uncertainty intervals.
+    """
     # Lengths
     l1: float  # upper arm
     l2: float  # forearm
@@ -50,8 +55,9 @@ class ModelParameters:
     stiffness_intervals: dict[str, tuple[float, float]]
 
 
+# Shorthand type aliases for readability
 InitialConditions = tuple[float, float, float, float, float, float]
-RunResult = dict[str, float | np.ndarray | ModelParameters]
+RunResult = dict[str, float | np.ndarray]
 
 
 class System(ABC):
@@ -86,7 +92,7 @@ class System(ABC):
         params: ModelParameters,
         ic: InitialConditions,
         t0: float = 0.0,
-        t1: float = 1000.0,
+        t1: float = 6.0,
         dt: float = 1e-3,
         amplitude_voluntary: float = 1.0,
         savedir: str = "results/runs"
@@ -361,7 +367,7 @@ class System(ABC):
     def _reset_control_variables(self) -> None:
         """
         Resets control-specific attributes that should not persist
-        across runs of the system. 
+        across runs of the system.
         """
         pass
 

@@ -75,7 +75,7 @@ def generate_all(
     groups = {
         bl_file: glob(
             f"{results_dir}/*_{bl_file.split(separator)[-1]}")
-        for bl_file in glob(f"{results_dir}/open_loop_*.{extension}")
+        for bl_file in glob(f"{results_dir}/uncontrolled_*.{extension}")
     }
     for baseline, controls in groups.items():
         generate_metrics_tables(

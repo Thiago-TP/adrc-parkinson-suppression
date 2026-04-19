@@ -6,8 +6,8 @@ import numpy as np
 import scipy
 from matplotlib import pyplot as plt
 
-# Change if LaTeX is not available in the system
-# (or if you want to use a different font)
+# Change if LaTeX is not available in your system
+# (or if you just want to use a different font)
 plt.rcParams.update({
     "text.usetex": True,
     "font.family": "serif",
@@ -15,14 +15,15 @@ plt.rcParams.update({
     "font.size": 20,
 })
 
+# Specific colors for frequent control names
 COLORS = {
     "afe_notch": "#0077BB",
     "eadrc_ebmflc": "#FF7F00",
     "eadrc_zplp": "#1CA1DA",
-    "open_loop": "#D8C303",
     "pi_gallego": "#2E8B57",
-    "pid_optimized": "#FF7F50",
-    "pid": "#FF3867",
+    "pid_de": "#FF7F50",
+    "pid_imc": "#FF3867",
+    "uncontrolled": "#D8C303",
 }
 
 SAVEFIG_ARGS = {  # slightly better than tight_layout
@@ -32,6 +33,27 @@ SAVEFIG_ARGS = {  # slightly better than tight_layout
 
 
 class Plots:
+    """
+    Plotting util for this project.
+    Initialized with the data from a single run,
+    and has methods to plot different aspects of the results.
+
+    Suite of plots includes:
+    - Time response of palm angle (theta_3) with voluntary component
+    - Control signal applied to wrist joint (u_3)
+    - Torque profiles of voluntary and involuntary components (tau_v, tau_i)
+    - DFT magnitude of measured and voluntary components (theta_3)
+    - PSD of measured and voluntary components (theta_3)
+    - Spectrogram of measured response (theta_3)
+
+    For frequency-domain plots and the spectogram,
+    an inlay zoom on the voluntary frequencies (0-0.4 Hz) is included.
+    Since the dynamics of the system happen in the 0-20 Hz range,
+    high resolution is required in the frequency domain,
+    which in turn requires long time series (tf-t0 ~ 1000 s).
+    Plots from data with shorter time range will be generated,
+    but a warning on the frequency resolution will be printed.
+    """
 
     def __init__(self,
                  control_name: str,
@@ -75,11 +97,11 @@ class Plots:
 
         # Warning on frequency resolution if time vector is small
         f_res = 1 / (self.t[-1] - self.t[0])
-        if f_res > 0.5:
+        if f_res > 0.001:
             print(
-                f"Warning: Frequency resolution is {f_res:.2f} Hz, "
+                f"Warning: Frequency resolution is {f_res:.3f} Hz, "
                 "which may be too coarse for meaningful frequency analysis."
-                "Consider increasing duration to at least 10s."
+                "Increase duration to 1000s for best experience."
             )
 
     def plot_torque_profiles(self):
@@ -126,10 +148,26 @@ class Plots:
 
         plt.figure(figsize=(10, 3))
 
-        plt.plot(self.t, theta[:, 2], color=COLORS.get(self.control_name, "black"), label=r"$\theta_3$")  # noqa: E501
-        if self.control_name not in ["afe_notch", "open_loop"]:
-            plt.plot(self.t, theta_v3_hat[:, 2], color="#BD1AEA", label=r"$\widehat{\theta}_{v_3}$")  # noqa: E501
-        plt.plot(self.t, theta_v[:, 2], linestyle="--", color="black", label=r"$\theta_{v_3}$")  # noqa: E501
+        plt.plot(
+            self.t,
+            theta[:, 2],
+            color=COLORS.get(self.control_name, "black"),
+            label=r"$\theta_3$",
+        )
+        if self.control_name not in ["afe_notch", "uncontrolled"]:
+            plt.plot(
+                self.t,
+                theta_v3_hat[:, 2],
+                color="#BD1AEA",
+                label=r"$\widehat{\theta}_{v_3}$",
+            )
+        plt.plot(
+            self.t,
+            theta_v[:, 2],
+            linestyle="--",
+            color="black",
+            label=r"$\theta_{v_3}$"
+        )
         plt.ylabel(r"Palm angle [\textdegree]")
         plt.xlabel("Time [s]")
         plt.xlim(*self.xlim)
@@ -337,7 +375,7 @@ class Plots:
         plt.ylabel("Frequency [Hz]")
         plt.xlabel("Time [s]")
         plt.ylim(*self.flim)
-        plt.xlim(0.5, self.xlim[1])  # skip initial transient (white strip)
+        plt.xlim(*self.xlim)  # skip initial transient (white strip)
         plt.colorbar(label="Power")
 
         os.makedirs(self.savedir, exist_ok=True)

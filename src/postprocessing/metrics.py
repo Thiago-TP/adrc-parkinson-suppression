@@ -8,6 +8,8 @@ import blosc
 import numpy as np
 from scipy.integrate import trapezoid
 
+PayLoad = dict[str, np.ndarray | float]
+
 EPS = 1e-12
 
 
@@ -22,7 +24,7 @@ def _sorted_run_keys(keys: list[str]) -> list[str]:
     return sorted(keys, key=_order_key)
 
 
-def run_payloads(data_path: Path) -> dict[str, dict[str, np.ndarray | float]]:
+def run_payloads(data_path: Path) -> dict[str, PayLoad]:
     with open(data_path, "rb") as f:
         compressed_pickle = f.read()
         depressed_pickle = blosc.decompress(compressed_pickle)
@@ -49,8 +51,8 @@ def _as_float_array(value: np.ndarray | float) -> np.ndarray:
 
 
 def _compute_metrics(
-    run_payload: dict[str, np.ndarray | float],
-    baseline_payload: dict[str, np.ndarray | float] | None,
+    run_payload: PayLoad,
+    baseline_payload: PayLoad | None,
 ) -> dict[str, float]:
     t = _as_float_array(run_payload["time"])
     theta = _as_float_array(run_payload["theta"])
@@ -170,8 +172,8 @@ def summarize_metrics_csv(metrics_csv: str | Path) -> Path:
         metric_columns = [name for name in fieldnames if name != "run_key"]
         if not metric_columns:
             raise ValueError(
-                "No metric columns found in CSV (expected columns besides run_key): "
-                f"{input_path}"
+                "No metric columns found in CSV "
+                f"(expected columns besides run_key): {input_path}"
             )
 
         rows = list(reader)
@@ -189,7 +191,8 @@ def summarize_metrics_csv(metrics_csv: str | Path) -> Path:
                 value = float(raw_value)
             except (TypeError, ValueError) as exc:
                 raise ValueError(
-                    f"Non-numeric value in column '{col}' for file {input_path}: "
+                    f"Non-numeric value in column '{col}' "
+                    f"for file {input_path}: "
                     f"{raw_value!r}"
                 ) from exc
             values_by_column[col].append(value)

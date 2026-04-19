@@ -6,8 +6,8 @@ from system import InitialConditions, ModelParameters, System
 
 class EADRC_ZPLP(System):
     """
-    Implements a standard Error-based Active Disturbance Rejection Control (EADRC)
-    strategy for Parkinson's tremor suppression.
+    Implements a standard Error-based Active Disturbance Rejection Control
+    (EADRC) strategy for Parkinson's tremor suppression.
     Compensation is based on the estimation of voluntary motion,
     which is done using a zero-phase low-pass (ZPLP) Butterworth filter.
     """
@@ -17,7 +17,7 @@ class EADRC_ZPLP(System):
         name: str,
         params: ModelParameters,
         ic: InitialConditions,
-        amplitude_voluntary: float = 1.0,
+        amplitude_voluntary: float,
         omega_c: float = 10,
     ) -> None:
         super().__init__(name, params, ic,

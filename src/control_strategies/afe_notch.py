@@ -10,7 +10,8 @@ class AFE_NotchControl(System):
     Based on the work of Zamanian and Richer (2019):
 
     Amir Hosein Zamanian, Edmond Richer,
-    Adaptive notch filter for pathological tremor suppression using permanent magnet linear motor,
+    Adaptive notch filter for pathological tremor suppression using
+    permanent magnet linear motor,
     Mechatronics,
     Volume 63,
     2019,
@@ -30,7 +31,7 @@ class AFE_NotchControl(System):
         name: str,
         params: ModelParameters,
         ic: InitialConditions,
-        amplitude_voluntary: float = 1.0,
+        amplitude_voluntary: float,
         # AFE parameters
         zeta_f: float = 0.01,
         zeta_e: float = 4,

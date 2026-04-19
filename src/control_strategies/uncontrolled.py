@@ -2,13 +2,18 @@
 from system import InitialConditions, ModelParameters, System
 
 
-class OpenLoopControl(System):
+class Uncontrolled(System):
+    """
+    Open loop control strategy, i.e. uncontrolled system.
+    This serves as a baseline for comparison with other control strategies.
+    """
+
     def __init__(
         self,
         name: str,
         params: ModelParameters,
         ic: InitialConditions,
-        amplitude_voluntary: float = 1.0,
+        amplitude_voluntary: float,
     ) -> None:
         super().__init__(name, params, ic,
                          amplitude_voluntary=amplitude_voluntary)
