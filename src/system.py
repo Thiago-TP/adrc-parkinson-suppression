@@ -199,12 +199,6 @@ class System(ABC):
             # Update response
             self.theta[k] = self.c_ss @ self.x[k]
 
-            # Update estimation of voluntary/tremor response
-            self._update_estimates(k)
-
-            # Update control signal
-            self._update_control(k)
-
             # Repeat Runge-Kutta process to obtain true voluntary response
             k1 = f_vol(t, self.x_v[k-1])
             k2 = f_vol(t + (self.dt / 2), self.x_v[k-1] + (self.dt * k1 / 2))
@@ -217,6 +211,12 @@ class System(ABC):
 
             # Update true voluntary response
             self.theta_v[k] = self.c_ss @ self.x_v[k]
+
+            # Update estimation of voluntary/tremor response
+            self._update_estimates(k)
+
+            # Update control signal
+            self._update_control(k)
 
         __end = time.time()
         print(f"Run took {__end - __start:.2f} s.")

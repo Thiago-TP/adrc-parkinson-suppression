@@ -21,6 +21,7 @@ COLORS = {
     "eadrc_zplp": "#1CA1DA",
     "open_loop": "#D8C303",
     "pi_gallego": "#2E8B57",
+    "pid_optimized": "#FF7F50",
     "pid": "#FF3867",
 }
 
