@@ -322,14 +322,21 @@ class Plots:
         # Time-frequency representation of measured response (theta_3)
         theta3 = self.theta[:, 2]
 
-        freq, time, spec = scipy.signal.spectrogram(theta3, fs=self.fs)
+        spec_args = {
+            "fs": self.fs,
+            "nperseg": 1024,
+            "noverlap": 512,
+            "window": "hann",
+            "nfft": 2048,
+        }
+        freq, time, spec = scipy.signal.spectrogram(theta3, **spec_args)
 
         plt.figure(figsize=(10, 4))
         plt.pcolormesh(time, freq, spec, shading="gouraud", cmap="coolwarm")
         plt.ylabel("Frequency [Hz]")
         plt.xlabel("Time [s]")
         plt.ylim(*self.flim)
-        plt.xlim(0.15, self.xlim[1])  # skip initial transient (white strip)
+        plt.xlim(0.5, self.xlim[1])  # skip initial transient (white strip)
         plt.colorbar(label="Power")
 
         os.makedirs(self.savedir, exist_ok=True)
