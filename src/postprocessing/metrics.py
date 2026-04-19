@@ -2,6 +2,7 @@ import csv
 import pickle
 import re
 from pathlib import Path
+from typing import Any
 
 import blosc
 import numpy as np
@@ -145,3 +146,73 @@ def write_csv(output_path: Path, rows: list[dict[str, str | float]]) -> None:
         writer.writerows(rows)
 
     print(f"* Saved metrics table: {output_path}")
+
+
+def summarize_metrics_csv(metrics_csv: str | Path) -> Path:
+    """
+    Read a metrics CSV and save columnwise mean/std to a "-summary" CSV.
+
+    The summary CSV keeps the same metric columns as the input file, excluding
+    ``run_key``. It contains two rows: first row is mean, second row is
+    standard deviation.
+    """
+    input_path = Path(metrics_csv)
+    summary_path = input_path.with_name(
+        f"{input_path.stem}-summary{input_path.suffix}"
+    )
+
+    with input_path.open("r", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        fieldnames = reader.fieldnames
+        if not fieldnames:
+            raise ValueError(f"CSV file has no header: {input_path}")
+
+        metric_columns = [name for name in fieldnames if name != "run_key"]
+        if not metric_columns:
+            raise ValueError(
+                "No metric columns found in CSV (expected columns besides run_key): "
+                f"{input_path}"
+            )
+
+        rows = list(reader)
+
+    if not rows:
+        raise ValueError(f"CSV has no data rows to summarize: {input_path}")
+
+    values_by_column: dict[str, list[float]] = {
+        col: [] for col in metric_columns}
+
+    for row in rows:
+        for col in metric_columns:
+            raw_value: Any = row.get(col, "")
+            try:
+                value = float(raw_value)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Non-numeric value in column '{col}' for file {input_path}: "
+                    f"{raw_value!r}"
+                ) from exc
+            values_by_column[col].append(value)
+
+    mean_row = {
+        col: float(np.mean(np.asarray(values_by_column[col], dtype=float)))
+        for col in metric_columns
+    }
+    std_row = {
+        col: float(np.std(np.asarray(values_by_column[col], dtype=float)))
+        for col in metric_columns
+    }
+
+    summary_rows = [
+        {"statistic": "mean", **mean_row},
+        {"statistic": "standard deviation", **std_row},
+    ]
+    summary_columns = ["statistic", *metric_columns]
+
+    with summary_path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=summary_columns)
+        writer.writeheader()
+        writer.writerows(summary_rows)
+
+    print(f"* Saved metrics summary: {summary_path}")
+    return summary_path

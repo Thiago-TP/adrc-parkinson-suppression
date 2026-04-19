@@ -1,7 +1,7 @@
 from glob import glob
 from pathlib import Path
 
-from metrics import metrics_table_for_file, write_csv
+from metrics import metrics_table_for_file, summarize_metrics_csv, write_csv
 from plots import plot_from_data
 
 
@@ -56,6 +56,7 @@ def generate_metrics_tables(
         )
         out_csv = (output_path / f"{file_name}_metrics.csv")
         write_csv(out_csv, rows)
+        summarize_metrics_csv(out_csv)
 
 
 def generate_all(
