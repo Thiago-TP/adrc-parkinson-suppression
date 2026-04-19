@@ -1,5 +1,5 @@
 import yaml
-import time
+
 from control_strategies import (
     afe_notch,
     eadrc_ebmflc,
@@ -84,7 +84,6 @@ def main(
     )
 
     print("\nRunning nominal model simulations...")
-    __start = time.time()
 
     controls = [
         afe_notch_control,
@@ -110,25 +109,24 @@ def main(
             control.simulate_system()
 
     # Save results across runs to npz files in results folder
-    afe_notch_control.save_results()
-    eadr_zplp_control.save_results()
-    eadr_ebmflc_control.save_results()
-    pid_control.save_results()
-    pi_gallego_control.save_results()
-    no_control.save_results()
+    for control in controls:
+        control.save_results()
+
+
+if __name__ == "__main__":
+    import time
+    __start = time.time()
+
+    main(
+        num_simulations=1,
+        amplitude_voluntary=0.0
+    )
+    main(
+        num_simulations=1,
+        amplitude_voluntary=1.0
+    )
 
     __stop = time.time()
     delta_s = __stop - __start
     delta_m = delta_s / 60
-    print(f"\nAll finished in {delta_s :.3f}s ({delta_m :.3f} minutes)")
-
-
-if __name__ == "__main__":
-    main(
-        num_simulations=2,
-        amplitude_voluntary=0.0
-    )
-    main(
-        num_simulations=2,
-        amplitude_voluntary=1.0
-    )
+    print(f"\nAll finished in {delta_s:.3f}s ({delta_m:.3f} minutes)")

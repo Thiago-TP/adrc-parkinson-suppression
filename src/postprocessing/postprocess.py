@@ -7,6 +7,7 @@ from plots import plot_from_data
 
 def generate_plots(
     control_files: list[str],
+    baseline_file: str,
     separator: str,
     run_key: str = "nominal_run",
 ) -> None:
@@ -22,7 +23,12 @@ def generate_plots(
 
     for file_path in control_files:
         control_name = Path(file_path).stem.split(separator)[0]
-        plot_from_data(file_path, control_name, run_key=run_key)
+        plot_from_data(
+            file_path,
+            baseline_file,
+            control_name,
+            run_key=run_key
+        )
 
 
 def generate_metrics_tables(
@@ -77,6 +83,7 @@ def generate_all(
         )
         generate_plots(
             control_files=controls,
+            baseline_file=baseline,
             separator=separator,
             run_key="nominal_run",
         )

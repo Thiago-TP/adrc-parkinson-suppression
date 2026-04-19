@@ -86,7 +86,7 @@ class System(ABC):
         params: ModelParameters,
         ic: InitialConditions,
         t0: float = 0.0,
-        t1: float = 6.0,
+        t1: float = 1000.0,
         dt: float = 1e-3,
         amplitude_voluntary: float = 1.0,
         savedir: str = "results/runs"
