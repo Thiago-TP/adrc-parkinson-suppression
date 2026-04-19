@@ -77,12 +77,15 @@ class EADRC_ZPLP(System):
 
     def _update_estimates(self, k: int) -> None:
         # Zero-phase low-pass Butterworth filter to estimate voluntary response
+        # using only samples observed up to the current timestep.
+        theta_prefix = self.theta[:k + 1]
         try:
-            self.theta_v_hat = scipy.signal.sosfiltfilt(
-                self.butter_sos, self.theta, axis=0,
+            theta_v_hat_prefix = scipy.signal.sosfiltfilt(
+                self.butter_sos, theta_prefix, axis=0,
             )
+            self.theta_v_hat[k] = theta_v_hat_prefix[-1]
         except ValueError:
-            self.theta_v_hat = self.theta.copy()
+            self.theta_v_hat[k] = self.theta[k]
 
     def _reset_control_variables(self) -> None:
         # Reset EADRC states
