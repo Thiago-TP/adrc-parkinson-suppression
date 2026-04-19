@@ -1,6 +1,13 @@
 import yaml
 
-from control_strategies import adrc, open_loop, pi_gallego, pid
+from control_strategies import (
+    afe_notch,
+    eadrc_ebmflc,
+    eadrc_zplp,
+    open_loop,
+    pi_gallego,
+    pid,
+)
 from system import ModelParameters
 
 
@@ -34,21 +41,20 @@ def main(
     ic = tuple(cfgs["initial_conditions"].values())
 
     # Run nominal model with different control strategies
-    no_control = open_loop.OpenLoopControl(
-        name="open_loop",
+    afe_notch_control = afe_notch.AFE_NotchControl(
+        name="afe_notch",
         params=parameters,
         ic=ic,
         amplitude_voluntary=amplitude_voluntary
     )
-    pid_control = pid.PIDControl(
-        name="pid",
+    eadr_ebmflc_control = eadrc_ebmflc.EADRC_EBMFLC(
+        name="eadrc_ebmflc",
         params=parameters,
         ic=ic,
-        amplitude_voluntary=amplitude_voluntary,
-        slow_factor=5.0
+        amplitude_voluntary=amplitude_voluntary
     )
-    adr_control = adrc.ADRControl(
-        name="adrc",
+    eadr_zplp_control = eadrc_zplp.EADRC_ZPLP(
+        name="eadrc_zplp",
         params=parameters,
         ic=ic,
         amplitude_voluntary=amplitude_voluntary
@@ -59,11 +65,30 @@ def main(
         ic=ic,
         amplitude_voluntary=amplitude_voluntary
     )
+    pid_control = pid.PIDControl(
+        name="pid",
+        params=parameters,
+        ic=ic,
+        amplitude_voluntary=amplitude_voluntary,
+        manual=True,
+        kp=0.0998772,
+        ki=98.7732779,
+        kd=0.040496,
+        # slow_factor=5.0  # slow factor for tuning only
+    )
+    no_control = open_loop.OpenLoopControl(
+        name="open_loop",
+        params=parameters,
+        ic=ic,
+        amplitude_voluntary=amplitude_voluntary
+    )
 
     print("\nRunning nominal model simulations...")
 
     controls = [
-        adr_control,
+        afe_notch_control,
+        eadr_zplp_control,
+        eadr_ebmflc_control,
         pid_control,
         pi_gallego_control,
         no_control,
@@ -84,13 +109,14 @@ def main(
             control.simulate_system()
 
     # Save results across runs to npz files in results folder
-    adr_control.save_results()
-    pid_control.save_results()
-    pi_gallego_control.save_results()
-    no_control.save_results()
+    for control in controls:
+        control.save_results()
 
 
 if __name__ == "__main__":
+    import time
+    __start = time.time()
+
     main(
         num_simulations=1,
         amplitude_voluntary=0.0
@@ -99,3 +125,8 @@ if __name__ == "__main__":
         num_simulations=1,
         amplitude_voluntary=1.0
     )
+
+    __stop = time.time()
+    delta_s = __stop - __start
+    delta_m = delta_s / 60
+    print(f"\nAll finished in {delta_s:.3f}s ({delta_m:.3f} minutes)")

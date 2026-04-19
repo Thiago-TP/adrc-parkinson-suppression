@@ -187,3 +187,25 @@ class GallegoPIControl(System):
         # Update estimates
         self.theta_i_hat[k, 2] = z.item()
         self.theta_v_hat[k, 2] = self.theta[k, 2] - self.theta_i_hat[k, 2]
+
+    def _reset_control_variables(self) -> None:
+        # Reset CDF estimates
+        self._x = 0.0  # voluntary position estimate
+        self._v = 0.0  # voluntary velocity estimate
+
+        # Reset WFLC weights, frequencies
+        self.w0 = 2 * np.pi * self.f0
+        self.w = np.zeros(2 * self.n)
+        self.w0_sum = self.w0
+
+        # Reset KF matrices, states
+        self.F = np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [np.cos(self.w0_sum * self.dt), np.sin(self.w0_sum * self.dt), 0]
+        ])
+        self.x_kf = np.zeros((3, 1))
+        self.P = 1e-3 * np.eye(3)
+
+        # Reset PI error integral
+        self.tremor_sum = 0.0

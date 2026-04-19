@@ -98,7 +98,6 @@ Runge-Kutta de quarta ordem, com passo de 0.001s, e duração de 6s
 		- The clinical and electrophysiological investigation of tremor (2022)
 	
 	- Revisões bibliográficas sobre supressão de tremor (geral)
-		- Modeling and canceling tremor in human-machine interfaces (2007)
 		- An overview and categorization of dynamic arm supports for people with decreased arm function
 		- Design of Passive Dynamic Absorbers to Attenuate Pathological Tremor of Human Upper Limb (2020)
 		- A Review on Wearable Technologies for Tremor Suppression (2021)

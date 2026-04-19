@@ -4,7 +4,14 @@ import scipy
 from system import InitialConditions, ModelParameters, System
 
 
-class ADRControl(System):
+class EADRC_ZPLP(System):
+    """
+    Implements a standard Error-based Active Disturbance Rejection Control (EADRC)
+    strategy for Parkinson's tremor suppression.
+    Compensation is based on the estimation of voluntary motion,
+    which is done using a zero-phase low-pass (ZPLP) Butterworth filter.
+    """
+
     def __init__(
         self,
         name: str,
@@ -76,3 +83,9 @@ class ADRControl(System):
             )
         except ValueError:
             self.theta_v_hat = self.theta.copy()
+
+    def _reset_control_variables(self) -> None:
+        # Reset EADRC states
+        self.xe1_hat = 0.0
+        self.xe2_hat = 0.0
+        self.z = 0.0

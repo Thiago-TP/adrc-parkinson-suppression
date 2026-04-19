@@ -140,3 +140,11 @@ class PIDControl(System):
             )
         except ValueError:
             self.theta_v_hat = self.theta.copy()
+
+    def _reset_control_variables(self) -> None:
+        # Reset errors
+        self.error_control = 0.0
+        self.error_sum = 0.0
+        self.error_delta = 0.0
+        self.error_previous = 0.0
+        return

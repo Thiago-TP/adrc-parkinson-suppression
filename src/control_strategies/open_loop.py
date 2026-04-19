@@ -1,5 +1,3 @@
-import numpy as np
-import scipy
 
 from system import InitialConditions, ModelParameters, System
 
@@ -14,27 +12,16 @@ class OpenLoopControl(System):
     ) -> None:
         super().__init__(name, params, ic,
                          amplitude_voluntary=amplitude_voluntary)
-
-        # Set voluntary motion estimator
-        self.butter_sos = scipy.signal.butter(
-            N=1,
-            Wn=5.0,
-            fs=self.fs,
-            btype="low",
-            output="sos"
-        )
-
         return
 
     def _update_control(self, k: int) -> None:
         # Null control signal in open loop
-        self.u[k] = np.zeros(3)
+        self.u[k, 2] = 0.0
 
     def _update_estimates(self, k: int) -> None:
-        # Zero-phase low-pass Butterworth filter to estimate voluntary response
-        try:
-            self.theta_v_hat = scipy.signal.sosfiltfilt(
-                self.butter_sos, self.theta, axis=0,
-            )
-        except ValueError:
-            self.theta_v_hat = self.theta.copy()
+        # No estimation in open loop control
+        return
+
+    def _reset_control_variables(self) -> None:
+        # Nothing to reset
+        return

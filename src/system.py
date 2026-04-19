@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import final
 
+import blosc
 import numpy as np
 from numpy.random import MT19937, RandomState, SeedSequence
 
@@ -85,7 +86,7 @@ class System(ABC):
         params: ModelParameters,
         ic: InitialConditions,
         t0: float = 0.0,
-        t1: float = 6.0,
+        t1: float = 1000.0,
         dt: float = 1e-3,
         amplitude_voluntary: float = 1.0,
         savedir: str = "results/runs"
@@ -102,7 +103,7 @@ class System(ABC):
         self.savedir: str = savedir
 
         # Time vector and sampling frequency
-        self.fs: float = 1 / self.dt
+        self.fs: float = 1 / self.dt  # useful for many tremor estimators
         self.t: np.ndarray = np.arange(
             self.t0,
             self.t1 + self.dt,
@@ -237,6 +238,8 @@ class System(ABC):
             "tau_v": np.array([self._tau_v(t) for t in self.t]),
             "tau_i": np.array([self._tau_i(t) for t in self.t]),
             "amplitude_voluntary": self.amplitude_voluntary,
+            "state_matrix": self.a,
+            "input_matrix": self.b,
         }
 
         return
@@ -250,7 +253,9 @@ class System(ABC):
         os.makedirs(self.savedir, exist_ok=True)
         path = f"{self.savedir}/{self.suffix}.data"
         with open(path, "wb") as f:
-            pickle.dump(self.results, f)
+            pickled_data = pickle.dumps(self.results)
+            compressed_pickle = blosc.compress(pickled_data, typesize=8)
+            f.write(compressed_pickle)
         print(f"Results saved to {path}.")
         return
 
@@ -336,7 +341,29 @@ class System(ABC):
         self.params.k3 = rs.uniform(*self.params.stiffness_intervals["k3"])
         self.params.k4 = rs.uniform(*self.params.stiffness_intervals["k4"])
         self._set_model()
+
+        # Restarts simulation-relevant attributes
+        self.u: np.ndarray = np.zeros((len(self.t), 3))
+        self.x: np.ndarray = np.zeros((len(self.t), 6))
+        self.x_v: np.ndarray = np.zeros((len(self.t), 6))
+        self.theta: np.ndarray = np.zeros((len(self.t), 3))
+        self.theta_v: np.ndarray = np.zeros((len(self.t), 3))
+        self.theta_v_hat: np.ndarray = np.zeros((len(self.t), 3))
+        self.theta_i: np.ndarray = np.zeros((len(self.t), 3))
+        self.theta_i_hat: np.ndarray = np.zeros((len(self.t), 3))
+
+        # Resets any other control-specific attributes
+        self._reset_control_variables()
+
         return
+
+    @abstractmethod
+    def _reset_control_variables(self) -> None:
+        """
+        Resets control-specific attributes that should not persist
+        across runs of the system. 
+        """
+        pass
 
     @abstractmethod
     def _update_control(self, k: int) -> None:
