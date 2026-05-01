@@ -1,7 +1,12 @@
 from glob import glob
 from pathlib import Path
 
-from metrics import metrics_table_for_file, summarize_metrics_csv, write_csv
+from metrics import (
+    merge_summaries_into_latex,
+    metrics_table_for_file,
+    summarize_metrics_csv,
+    write_csv,
+)
 from plots import plot_from_data
 
 
@@ -81,6 +86,11 @@ def generate_all(
             separator=separator,
             run_key="nominal_run",
         )
+
+        # Tidy up numerical results into LaTeX table for the paper
+        baseline_name = Path(baseline).stem
+        amplitude = baseline_name.split(separator)[-1]
+        merge_summaries_into_latex(amplitude=amplitude)
 
 
 if __name__ == "__main__":

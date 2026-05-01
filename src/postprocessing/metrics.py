@@ -1,6 +1,7 @@
 import csv
 import pickle
 import re
+from glob import glob
 from pathlib import Path
 from typing import Any
 
@@ -217,3 +218,122 @@ def summarize_metrics_csv(metrics_csv: str | Path) -> Path:
 
     print(f"* Saved metrics summary: {summary_path}")
     return summary_path
+
+
+def merge_summaries_into_latex(
+    metrics_dir: str = "results/metrics",
+    output_file: str | None = None,
+    amplitude: str | None = None,
+) -> Path:
+    """
+    Merge all -summary.csv files into a single LaTeX table.
+
+    Creates a LaTeX tabular environment where each row represents a control
+    strategy and columns contain metrics formatted as "mean ± std" with two
+    decimal places.
+
+    Parameters
+    ----------
+    metrics_dir : str
+        Directory containing the summary CSV files.
+    output_file : str, optional
+        Path to the output LaTeX file. If None, defaults to
+        "results/metrics/merged_summaries.tex" or
+        "results/metrics/merged_summaries_amplitude_{amplitude}.tex" if amplitude
+        is provided.
+    amplitude : str, optional
+        Filter summary files to match a specific amplitude value.
+        If provided, only files matching this amplitude are included.
+
+    Returns
+    -------
+    Path
+        Path to the created LaTeX file.
+    """
+    # Set default output file if not provided
+    if output_file is None:
+        if amplitude is not None:
+            output_file = f"{metrics_dir}/merged_summaries_amplitude_{amplitude}.tex"
+        else:
+            output_file = f"{metrics_dir}/merged_summaries.tex"
+
+    # Find all summary CSV files
+    summary_files = sorted(glob(f"{metrics_dir}/*-summary.csv"))
+    if not summary_files:
+        raise ValueError(f"No summary CSV files found in {metrics_dir}")
+
+    # Dictionary to store formatted metrics for each control strategy
+    formatted_data: dict[str, dict[str, str]] = {}
+    all_metric_columns: list[str] | None = None
+
+    for file_path in summary_files:
+        file_name = Path(file_path).stem
+        # Extract control strategy name (remove -summary suffix and amplitude info)
+        # File format: {control_name}_amplitude_{amplitude}_metrics-summary
+        parts = file_name.replace("_metrics-summary", "").rsplit("_amplitude_", 1)
+        control_name = parts[0] if parts else file_name
+        file_amplitude = parts[1] if len(parts) > 1 else None
+
+        # Filter by amplitude if specified
+        if amplitude is not None and file_amplitude != amplitude:
+            continue
+
+        # Read the summary CSV
+        with open(file_path, "r", newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+
+            if len(rows) < 2:
+                continue
+
+            mean_row = rows[0]  # First row is mean
+            std_row = rows[1]  # Second row is std
+
+        if all_metric_columns is None:
+            all_metric_columns = [col for col in mean_row.keys() if col != "statistic"]
+
+        # Format metrics as "mean ± std"
+        formatted_metrics: dict[str, str] = {}
+        for col in all_metric_columns:
+            try:
+                mean_val = float(mean_row.get(col, ""))
+                std_val = float(std_row.get(col, ""))
+                formatted_metrics[col] = f"{mean_val:.2f} $\\pm$ {std_val:.2f}"
+            except (ValueError, TypeError):
+                formatted_metrics[col] = "—"
+
+        formatted_data[control_name] = formatted_metrics
+
+    if all_metric_columns is None:
+        raise ValueError("No valid metric columns found in summary files")
+
+    # Create LaTeX table
+    output_path = Path(output_file)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with output_path.open("w", encoding="utf-8") as f:
+        # Write table header
+        col_spec = "l" + "r" * len(all_metric_columns)
+        f.write(f"\\begin{{tabular}}{{{col_spec}}}\n")
+        f.write("\\toprule\n")
+
+        # Column headers
+        f.write("Strategy")
+        for col in all_metric_columns:
+            f.write(f" & {col}")
+        f.write(" \\\\\n")
+        f.write("\\midrule\n")
+
+        # Data rows
+        for control_name in sorted(formatted_data.keys()):
+            f.write(control_name)
+            for col in all_metric_columns:
+                value = formatted_data[control_name].get(col, "—")
+                f.write(f" & {value}")
+            f.write(" \\\\\n")
+
+        f.write("\\bottomrule\n")
+        f.write("\\end{tabular}\n")
+
+    print(f"* Saved merged summaries LaTeX table: {output_path}")
+    return output_path
