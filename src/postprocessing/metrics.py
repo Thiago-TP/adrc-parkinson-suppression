@@ -55,18 +55,18 @@ def _compute_metrics(
     baseline_payload: PayLoad | None,
 ) -> dict[str, float]:
     t = _as_float_array(run_payload["time"])
-    theta = _as_float_array(run_payload["theta"])
-    theta_v = _as_float_array(run_payload["theta_v"])
-    u = _as_float_array(run_payload["u"])
+    theta = _as_float_array(run_payload["theta"][:, 2])
+    theta_v = _as_float_array(run_payload["theta_v"][:, 2])
+    u = _as_float_array(run_payload["u"][:, 2])
 
-    entropy = float(_entropy(theta[:, 2]))
+    entropy = float(_entropy(theta))
 
-    err = theta - theta_v
-    err_sq = np.sum(err**2, axis=1)
-    err_abs = np.sum(np.abs(err), axis=1)
+    err = theta_v - theta
+    err_sq = err**2
+    err_abs = np.abs(err)
 
     # Tremor residual is modeled as deviation from voluntary component.
-    tremor = err[:, 2]
+    tremor = err
     tremor_power = float(np.mean(tremor**2))
     tremor_amplitude = float(np.ptp(tremor))
 
@@ -74,9 +74,9 @@ def _compute_metrics(
         tpsr = np.nan
         asr = np.nan
     else:
-        theta_bl = _as_float_array(baseline_payload["theta"])
-        theta_v_bl = _as_float_array(baseline_payload["theta_v"])
-        tremor_bl = theta_bl[:, 2] - theta_v_bl[:, 2]
+        theta_bl = _as_float_array(baseline_payload["theta"][:, 2])
+        theta_v_bl = _as_float_array(baseline_payload["theta_v"][:, 2])
+        tremor_bl = theta_bl - theta_v_bl
         tremor_power_bl = float(np.mean(tremor_bl**2))
         tremor_amplitude_bl = float(np.ptp(tremor_bl))
 
@@ -92,12 +92,12 @@ def _compute_metrics(
         )
 
     # Control signal metrics
-    u_sq = np.sum(u**2, axis=1)
-    u_abs = np.sum(np.abs(u), axis=1)
+    u_sq = u**2
+    u_abs = np.abs(u)
     control_power = float(np.mean(u_sq))
     control_rms = float(np.sqrt(control_power))
-    u_dot = np.gradient(u, t, axis=0)
-    u_dot_abs = np.sum(np.abs(u_dot), axis=1)
+    u_dot = np.gradient(u, t)
+    u_dot_abs = np.abs(u_dot)
     control_tvc = float(trapezoid(u_dot_abs, t))
     control_iac = float(trapezoid(u_abs, t))
     control_isc = float(trapezoid(u_sq, t))
@@ -106,6 +106,7 @@ def _compute_metrics(
         "tpsr_percent": float(tpsr),
         "asr_percent": float(asr),
         "rmse": float(np.sqrt(np.mean(err_sq))),
+        "r2": float(1 - np.sum(err_sq) / np.sum((theta - np.mean(theta)) ** 2)),
         "response_entropy": entropy,
         "control_power": control_power,
         "control_rms": control_rms,
@@ -159,9 +160,7 @@ def summarize_metrics_csv(metrics_csv: str | Path) -> Path:
     standard deviation.
     """
     input_path = Path(metrics_csv)
-    summary_path = input_path.with_name(
-        f"{input_path.stem}-summary{input_path.suffix}"
-    )
+    summary_path = input_path.with_name(f"{input_path.stem}-summary{input_path.suffix}")
 
     with input_path.open("r", newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -181,8 +180,7 @@ def summarize_metrics_csv(metrics_csv: str | Path) -> Path:
     if not rows:
         raise ValueError(f"CSV has no data rows to summarize: {input_path}")
 
-    values_by_column: dict[str, list[float]] = {
-        col: [] for col in metric_columns}
+    values_by_column: dict[str, list[float]] = {col: [] for col in metric_columns}
 
     for row in rows:
         for col in metric_columns:

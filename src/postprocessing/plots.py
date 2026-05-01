@@ -8,12 +8,14 @@ from matplotlib import pyplot as plt
 
 # Change if LaTeX is not available in your system
 # (or if you just want to use a different font)
-plt.rcParams.update({
-    "text.usetex": True,
-    "font.family": "serif",
-    "text.latex.preamble": r"\usepackage{bm, amsmath}",
-    "font.size": 20,
-})
+plt.rcParams.update(
+    {
+        "text.usetex": True,
+        "font.family": "serif",
+        "text.latex.preamble": r"\usepackage{bm, amsmath}",
+        "font.size": 20,
+    }
+)
 
 # Specific colors for frequent control names
 COLORS = {
@@ -55,25 +57,26 @@ class Plots:
     but a warning on the frequency resolution will be printed.
     """
 
-    def __init__(self,
-                 control_name: str,
-                 time: np.ndarray,
-                 theta: np.ndarray,
-                 theta_baseline: np.ndarray,
-                 theta_v: np.ndarray,
-                 theta_v_hat: np.ndarray,
-                 theta_i: np.ndarray,
-                 theta_i_hat: np.ndarray,
-                 u: np.ndarray,
-                 tau_v: np.ndarray,
-                 tau_i: np.ndarray,
-                 amplitude_voluntary: float,
-                 xlim: tuple[float, float] = (0.0, 6.0),
-                 ylim: tuple[float, float] = (-80.0, 80.0),
-                 flim: tuple[float, float] = (0.0, 20.0),
-                 savedir: str = "results/plots",
-                 **kwargs,  # add more data without changing the signature
-                 ) -> None:
+    def __init__(
+        self,
+        control_name: str,
+        time: np.ndarray,
+        theta: np.ndarray,
+        theta_baseline: np.ndarray,
+        theta_v: np.ndarray,
+        theta_v_hat: np.ndarray,
+        theta_i: np.ndarray,
+        theta_i_hat: np.ndarray,
+        u: np.ndarray,
+        tau_v: np.ndarray,
+        tau_i: np.ndarray,
+        amplitude_voluntary: float,
+        xlim: tuple[float, float] = (0.0, 6.0),
+        ylim: tuple[float, float] = (-80.0, 80.0),
+        flim: tuple[float, float] = (0.0, 20.0),
+        savedir: str = "results/plots",
+        **kwargs,  # add more data without changing the signature
+    ) -> None:
         self.control_name = control_name
         self.t = time
         self.theta = theta
@@ -89,9 +92,9 @@ class Plots:
         self.xlim = xlim
         self.ylim = ylim
         self.flim = flim
-        self.suffix = "_".join([
-            self.control_name, "amplitude", str(self.amplitude_voluntary)
-        ])
+        self.suffix = "_".join(
+            [self.control_name, "amplitude", str(self.amplitude_voluntary)]
+        )
         self.savedir = f"{savedir}/{self.suffix}"
         self.fs = 1.0 / (self.t[1] - self.t[0])
 
@@ -100,7 +103,7 @@ class Plots:
         if f_res > 0.001:
             print(
                 f"Warning: Frequency resolution is {f_res:.3f} Hz, "
-                "which may be too coarse for meaningful frequency analysis."
+                "which may be too coarse for meaningful frequency analysis. "
                 "Increase duration to 1000s for best experience."
             )
 
@@ -110,8 +113,12 @@ class Plots:
         )
 
         axs[0].plot(self.t, self.tau_v[:, 0], color="black", label=r"$\tau_{v_1}$")  # noqa: E501
-        axs[0].plot(self.t, self.tau_v[:, 1], "-.", color="black", label=r"$\tau_{v_2}$")  # noqa: E501
-        axs[0].plot(self.t, self.tau_v[:, 2], "--", color="black", label=r"$\tau_{v_3}$")  # noqa: E501
+        axs[0].plot(
+            self.t, self.tau_v[:, 1], "-.", color="black", label=r"$\tau_{v_2}$"
+        )  # noqa: E501
+        axs[0].plot(
+            self.t, self.tau_v[:, 2], "--", color="black", label=r"$\tau_{v_3}$"
+        )  # noqa: E501
         axs[0].set_xlabel("")
         axs[0].set_ylabel(r"$\bm{\tau}_v$ [Nm]")
         axs[0].grid()
@@ -133,10 +140,7 @@ class Plots:
         plt.xlim(*self.xlim)
 
         os.makedirs(self.savedir, exist_ok=True)
-        plt.savefig(
-            f"{self.savedir}/torque_profiles_{self.suffix}.pdf",
-            **SAVEFIG_ARGS
-        )
+        plt.savefig(f"{self.savedir}/torque_profiles_{self.suffix}.pdf", **SAVEFIG_ARGS)
         self._saved_plot_msg("torque_profiles")
         plt.close()
 
@@ -166,7 +170,7 @@ class Plots:
             theta_v[:, 2],
             linestyle="--",
             color="black",
-            label=r"$\theta_{v_3}$"
+            label=r"$\theta_{v_3}$",
         )
         plt.ylabel(r"Palm angle [\textdegree]")
         plt.xlabel("Time [s]")
@@ -176,10 +180,7 @@ class Plots:
         plt.grid()
 
         os.makedirs(self.savedir, exist_ok=True)
-        plt.savefig(
-            f"{self.savedir}/time_response_{self.suffix}.pdf",
-            **SAVEFIG_ARGS
-        )
+        plt.savefig(f"{self.savedir}/time_response_{self.suffix}.pdf", **SAVEFIG_ARGS)
         self._saved_plot_msg("time_response")
         plt.close()
 
@@ -195,10 +196,7 @@ class Plots:
         plt.xlabel("Time [s]")
 
         os.makedirs(self.savedir, exist_ok=True)
-        plt.savefig(
-            f"{self.savedir}/control_{self.suffix}.pdf",
-            **SAVEFIG_ARGS
-        )
+        plt.savefig(f"{self.savedir}/control_{self.suffix}.pdf", **SAVEFIG_ARGS)
         self._saved_plot_msg("control")
         plt.close()
 
@@ -219,20 +217,13 @@ class Plots:
                 freqs,
                 dft_theta3,
                 color=COLORS.get(self.control_name, "black"),
-                label=r"$\theta_3^\text{con.}$"
+                label=r"$\theta_3^\text{con.}$",
             )
         plt.semilogy(
-            freqs,
-            dft_theta3_base,
-            color="#BD1AEA",
-            label=r"$\theta_3^\text{unc.}$"
+            freqs, dft_theta3_base, color="#BD1AEA", label=r"$\theta_3^\text{unc.}$"
         )
         plt.semilogy(
-            freqs,
-            dft_theta_v3,
-            linestyle="--",
-            color="black",
-            label=r"$\theta_{v_3}$"
+            freqs, dft_theta_v3, linestyle="--", color="black", label=r"$\theta_{v_3}$"
         )
         plt.ylabel("DFT Magnitude")
         plt.xlabel("Frequency [Hz]")
@@ -248,30 +239,20 @@ class Plots:
                 freqs,
                 dft_theta3,
                 color=COLORS.get(self.control_name, "black"),
-                label=r"$\theta_3^\text{con.}$"
+                label=r"$\theta_3^\text{con.}$",
             )
         ax_inlay.semilogy(
-            freqs,
-            dft_theta3_base,
-            color="#BD1AEA",
-            label=r"$\theta_3^\text{unc.}$"
+            freqs, dft_theta3_base, color="#BD1AEA", label=r"$\theta_3^\text{unc.}$"
         )
         ax_inlay.semilogy(
-            freqs,
-            dft_theta_v3,
-            linestyle="--",
-            color="black",
-            label=r"$\theta_{v_3}$"
+            freqs, dft_theta_v3, linestyle="--", color="black", label=r"$\theta_{v_3}$"
         )
         ax_inlay.set_xlim(0, 0.4)
         ax_inlay.set_xticks([0.0, 0.1, 0.2, 0.3, 0.4])
         ax_inlay.grid()
 
         os.makedirs(self.savedir, exist_ok=True)
-        plt.savefig(
-            f"{self.savedir}/dft_response_{self.suffix}.pdf",
-            **SAVEFIG_ARGS
-        )
+        plt.savefig(f"{self.savedir}/dft_response_{self.suffix}.pdf", **SAVEFIG_ARGS)
         self._saved_plot_msg("dft_response")
         plt.close()
 
@@ -301,20 +282,13 @@ class Plots:
                 freqs,
                 psd_theta3,
                 color=COLORS.get(self.control_name, "black"),
-                label=r"$\theta_3^\text{con.}$"
+                label=r"$\theta_3^\text{con.}$",
             )
         plt.semilogy(
-            freqs,
-            psd_theta3_base,
-            color="#BD1AEA",
-            label=r"$\theta_3^\text{unc.}$"
+            freqs, psd_theta3_base, color="#BD1AEA", label=r"$\theta_3^\text{unc.}$"
         )
         plt.semilogy(
-            freqs,
-            psd_theta_v3,
-            linestyle="--",
-            color="black",
-            label=r"$\theta_{v_3}$"
+            freqs, psd_theta_v3, linestyle="--", color="black", label=r"$\theta_{v_3}$"
         )
         plt.ylabel("PSD [rad$^2$/Hz]")
         plt.xlabel("Frequency [Hz]")
@@ -330,30 +304,20 @@ class Plots:
                 freqs,
                 psd_theta3,
                 color=COLORS.get(self.control_name, "black"),
-                label=r"$\theta_3^\text{con.}$"
+                label=r"$\theta_3^\text{con.}$",
             )
         ax_inlay.semilogy(
-            freqs,
-            psd_theta3_base,
-            color="#BD1AEA",
-            label=r"$\theta_3^\text{unc.}$"
+            freqs, psd_theta3_base, color="#BD1AEA", label=r"$\theta_3^\text{unc.}$"
         )
         ax_inlay.semilogy(
-            freqs,
-            psd_theta_v3,
-            linestyle="--",
-            color="black",
-            label=r"$\theta_{v_3}$"
+            freqs, psd_theta_v3, linestyle="--", color="black", label=r"$\theta_{v_3}$"
         )
         ax_inlay.set_xlim(0, 0.4)
         ax_inlay.set_xticks([0.0, 0.1, 0.2, 0.3, 0.4])
         ax_inlay.grid()
 
         os.makedirs(self.savedir, exist_ok=True)
-        plt.savefig(
-            f"{self.savedir}/psd_response_{self.suffix}.pdf",
-            **SAVEFIG_ARGS
-        )
+        plt.savefig(f"{self.savedir}/psd_response_{self.suffix}.pdf", **SAVEFIG_ARGS)
         self._saved_plot_msg("psd_response")
         plt.close()
 
@@ -380,8 +344,7 @@ class Plots:
 
         os.makedirs(self.savedir, exist_ok=True)
         plt.savefig(
-            f"{self.savedir}/spectrogram_response_{self.suffix}.png",
-            **SAVEFIG_ARGS
+            f"{self.savedir}/spectrogram_response_{self.suffix}.png", **SAVEFIG_ARGS
         )
         self._saved_plot_msg("spectrogram_response")
         plt.close()
