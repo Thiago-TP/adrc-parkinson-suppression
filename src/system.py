@@ -143,6 +143,16 @@ class System(ABC):
         self._set_model()
 
         # Initializations of simulation-relevant attributes:
+        self._initialize_simulation_attributes()
+
+        # Results storage across runs
+        self.suffix: str = f"{self.name}_amplitude_{self.amplitude_voluntary}"
+        self.results: dict[str, RunResult] = {}
+
+        return
+
+    @final
+    def _initialize_simulation_attributes(self) -> None:
         self.u[0] = np.array([0.0, 0.0, 0.0])
         self.x[0] = np.array(self.ic)
         self.x_v[0] = np.array(self.ic)
@@ -151,12 +161,6 @@ class System(ABC):
         self.theta_v_hat[0] = self.theta[0]
         self.theta_i[0] = np.zeros(3)
         self.theta_i_hat[0] = np.zeros(3)
-
-        # Results storage across runs
-        self.suffix: str = f"{self.name}_amplitude_{self.amplitude_voluntary}"
-        self.results: dict[str, RunResult] = {}
-
-        return
 
     # Torque profiles (voluntary and involuntary)
     @final
@@ -240,7 +244,7 @@ class System(ABC):
         else:
             key = f"non_nominal_run_{len(self.results)}"
 
-        self.results[key]: RunResult = {
+        self.results[key] = {
             "time": self.t,
             "theta": self.theta,
             "theta_v": self.theta_v,
@@ -354,7 +358,7 @@ class System(ABC):
         self.params.k4 = rs.uniform(*self.params.stiffness_intervals["k4"])
         self._set_model()
 
-        # Restarts simulation-relevant attributes
+        # Clears simulation-relevant attributes
         self.u: np.ndarray = np.zeros((len(self.t), 3))
         self.x: np.ndarray = np.zeros((len(self.t), 6))
         self.x_v: np.ndarray = np.zeros((len(self.t), 6))
@@ -363,6 +367,9 @@ class System(ABC):
         self.theta_v_hat: np.ndarray = np.zeros((len(self.t), 3))
         self.theta_i: np.ndarray = np.zeros((len(self.t), 3))
         self.theta_i_hat: np.ndarray = np.zeros((len(self.t), 3))
+
+        # Initialize state and response for new run with initial conditions
+        self._initialize_simulation_attributes()
 
         # Resets any other control-specific attributes
         self._reset_control_variables()

@@ -103,21 +103,26 @@ def _compute_metrics(
     control_iac = float(trapezoid(u_abs, t))
     control_isc = float(trapezoid(u_sq, t))
 
+    # R2 score
+    ss_res = np.sum(err_sq)
+    ss_tot = sum((theta_v - np.mean(theta_v)) ** 2)
+    r2 = 1 - (ss_res / (ss_tot + EPS))
+
     return {
         "tpsr_percent": float(tpsr),
         "asr_percent": float(asr),
         "rmse": float(np.sqrt(np.mean(err_sq))),
-        "r2": float(1 - np.sum(err_sq) / np.sum((theta - np.mean(theta)) ** 2)),
+        "r2": float(r2),
         "response_entropy": entropy,
+        "iae": float(trapezoid(err_abs, t)),
+        "ise": float(trapezoid(err_sq, t)),
+        "itae": float(trapezoid(t * err_abs, t)),
+        "itse": float(trapezoid(t * err_sq, t)),
         "control_power": control_power,
         "control_rms": control_rms,
         "control_tvc": control_tvc,
         "control_iac": control_iac,
         "control_isc": control_isc,
-        "ise": float(trapezoid(err_sq, t)),
-        "iae": float(trapezoid(err_abs, t)),
-        "itae": float(trapezoid(t * err_abs, t)),
-        "itse": float(trapezoid(t * err_sq, t)),
     }
 
 
