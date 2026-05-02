@@ -345,12 +345,11 @@ class Plots:
         plt.ylabel("Frequency [Hz]")
         plt.xlabel("Time [s]")
         plt.ylim(*self.flim)
-        # plt.xlim(*self.xlim)  # skip initial transient (white strip)
-        plt.colorbar(label="Power")
+        plt.colorbar(label=r"rad$^2$/Hz")
 
         os.makedirs(self.savedir, exist_ok=True)
         plt.savefig(
-            f"{self.savedir}/spectrogram_response_{self.suffix}.png", **SAVEFIG_ARGS
+            f"{self.savedir}/spectrogram_response_{self.suffix}.pdf", **SAVEFIG_ARGS
         )
         self._saved_plot_msg("spectrogram_response")
         plt.close()
