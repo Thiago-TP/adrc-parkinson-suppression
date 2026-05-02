@@ -327,19 +327,25 @@ class Plots:
 
         spec_args = {
             "fs": self.fs,
-            "nperseg": 1024,
-            "noverlap": 512,
-            "window": "hann",
-            "nfft": 2048,
+            "nperseg": 4096,  # long length for best frequency resolution
+            "noverlap": 4096 // 2,  # 50% overlap for smoother spectrogram
         }
         freq, time, spec = scipy.signal.spectrogram(theta3, **spec_args)
 
         plt.figure(figsize=(10, 4))
-        plt.pcolormesh(time, freq, spec, shading="gouraud", cmap="coolwarm")
+        plt.imshow(
+            spec,
+            aspect="auto",
+            origin="lower",
+            extent=[time[0], time[-1], freq[0], freq[-1]],
+            cmap="coolwarm",
+            vmin=0,
+            vmax=0.3,
+        )
         plt.ylabel("Frequency [Hz]")
         plt.xlabel("Time [s]")
         plt.ylim(*self.flim)
-        plt.xlim(*self.xlim)  # skip initial transient (white strip)
+        # plt.xlim(*self.xlim)  # skip initial transient (white strip)
         plt.colorbar(label="Power")
 
         os.makedirs(self.savedir, exist_ok=True)
