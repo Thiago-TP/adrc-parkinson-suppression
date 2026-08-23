@@ -47,25 +47,25 @@ def main(
         name="afe_notch",
         params=parameters,
         ic=ic,
-        amplitude_voluntary=amplitude_voluntary
+        amplitude_voluntary=amplitude_voluntary,
     )
     eadr_ebmflc_control = eadrc_ebmflc.EADRC_EBMFLC(
         name="eadrc_ebmflc",
         params=parameters,
         ic=ic,
-        amplitude_voluntary=amplitude_voluntary
+        amplitude_voluntary=amplitude_voluntary,
     )
     eadr_zplp_control = eadrc_zplp.EADRC_ZPLP(
         name="eadrc_zplp",
         params=parameters,
         ic=ic,
-        amplitude_voluntary=amplitude_voluntary
+        amplitude_voluntary=amplitude_voluntary,
     )
     pi_gallego_control = pi_gallego.GallegoPIControl(
         name="pi_gallego",
         params=parameters,
         ic=ic,
-        amplitude_voluntary=amplitude_voluntary
+        amplitude_voluntary=amplitude_voluntary,
     )
     pid_imc_control = pid.PIDControl(
         name="pid_imc",
@@ -75,9 +75,14 @@ def main(
         # Values below were found with slow_factor=5.0 on
         # the nominal model with amplitude_voluntary=1.0
         manual=True,
-        kp=0.0998772,
-        ki=98.7732779,
-        kd=0.040496,
+        # IMC gains for slow_factor=5
+        # kp=0.0998772,
+        # ki=98.7732779,
+        # kd=0.040496,
+        # IMC gains for slow_factor=3.9 (best from grid search)
+        kp=0.1266318,
+        ki=126.6317684,
+        kd=0.0519192,
     )
     pid_de_control = pid.PIDControl(
         name="pid_de",
@@ -86,16 +91,21 @@ def main(
         amplitude_voluntary=amplitude_voluntary,
         # Values below were found from src/pid_tuning.py
         manual=True,
-        kp=1.2998816,
-        ki=20.2188130,
-        kd=3.2374438,
+        # Perfect tracker gains from shallow-search DE
+        # kp=1.2998816,
+        # ki=20.2188130,
+        # kd=3.2374438,
+        # Perfect tracker gains from deep-search DE
+        kp=2.8024576,
+        ki=16.3107364,
+        kd=3.2077601,
         perfect_tracking=True,
     )
     no_control = uncontrolled.Uncontrolled(
         name="uncontrolled",
         params=parameters,
         ic=ic,
-        amplitude_voluntary=amplitude_voluntary
+        amplitude_voluntary=amplitude_voluntary,
     )
 
     # Run nominal model simulations for selected control strategies
@@ -130,19 +140,11 @@ def main(
 
 
 if __name__ == "__main__":
-
     import time
 
     __start = time.time()
-
-    main(
-        num_simulations=1,
-        amplitude_voluntary=0.0
-    )
-    main(
-        num_simulations=1,
-        amplitude_voluntary=1.0
-    )
+    main(num_simulations=1, amplitude_voluntary=0.0)
+    main(num_simulations=1, amplitude_voluntary=1.0)
     __stop = time.time()
 
     delta_s = __stop - __start

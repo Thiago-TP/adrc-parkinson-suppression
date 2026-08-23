@@ -213,4 +213,5 @@ papers/
 # Generated simulation results (outputs from running scripts)
 results/runs/
 results/plots/
-results/metrics/
+results/metrics/*
+!results/metrics/*-stats.csv
