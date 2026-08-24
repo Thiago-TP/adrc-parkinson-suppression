@@ -1,5 +1,6 @@
 from glob import glob
 from pathlib import Path
+from statistics import main as generate_statistics
 
 from metrics import (
     merge_summaries_into_latex,
@@ -91,6 +92,9 @@ def generate_all(
         baseline_name = Path(baseline).stem
         amplitude = baseline_name.split(separator)[-1]
         merge_summaries_into_latex(amplitude=amplitude)
+
+    # Final stage: generate statistical analysis of the results (Wilcoxon tests, etc.)
+    generate_statistics()
 
 
 if __name__ == "__main__":
