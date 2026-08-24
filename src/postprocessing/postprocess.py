@@ -1,7 +1,13 @@
 from glob import glob
 from pathlib import Path
+from statistics import main as generate_statistics
 
-from metrics import metrics_table_for_file, summarize_metrics_csv, write_csv
+from metrics import (
+    merge_summaries_into_latex,
+    metrics_table_for_file,
+    summarize_metrics_csv,
+    write_csv,
+)
 from plots import plot_from_data
 
 
@@ -23,12 +29,7 @@ def generate_plots(
 
     for file_path in control_files:
         control_name = Path(file_path).stem.split(separator)[0]
-        plot_from_data(
-            file_path,
-            baseline_file,
-            control_name,
-            run_key=run_key
-        )
+        plot_from_data(file_path, baseline_file, control_name, run_key=run_key)
 
 
 def generate_metrics_tables(
@@ -46,7 +47,6 @@ def generate_metrics_tables(
     output_path = Path(metrics_dir)
 
     for file in control_files:
-
         file_name = Path(file).stem
 
         print(f"\nGenerating metrics table for file: {file}")
@@ -54,7 +54,7 @@ def generate_metrics_tables(
             Path(file),
             baseline=Path(baseline_file),
         )
-        out_csv = (output_path / f"{file_name}_metrics.csv")
+        out_csv = output_path / f"{file_name}_metrics.csv"
         write_csv(out_csv, rows)
         summarize_metrics_csv(out_csv)
 
@@ -73,8 +73,7 @@ def generate_all(
     # Files are expected to be named in the format:
     # {control_name}_amplitude_{amplitude}.{extension}
     groups = {
-        bl_file: glob(
-            f"{results_dir}/*_{bl_file.split(separator)[-1]}")
+        bl_file: glob(f"{results_dir}/*_{bl_file.split(separator)[-1]}")
         for bl_file in glob(f"{results_dir}/uncontrolled_*.{extension}")
     }
     for baseline, controls in groups.items():
@@ -89,7 +88,14 @@ def generate_all(
             run_key="nominal_run",
         )
 
+        # Tidy up numerical results into LaTeX table for the paper
+        baseline_name = Path(baseline).stem
+        amplitude = baseline_name.split(separator)[-1]
+        merge_summaries_into_latex(amplitude=amplitude)
+
+    # Final stage: generate statistical analysis of the results (Wilcoxon tests, etc.)
+    generate_statistics()
+
 
 if __name__ == "__main__":
-
     generate_all()

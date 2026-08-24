@@ -19,6 +19,7 @@ class ModelParameters:
     Inertia values remain constant, while stiffness values
     are resampled across runs from their uncertainty intervals.
     """
+
     # Lengths
     l1: float  # upper arm
     l2: float  # forearm
@@ -95,7 +96,7 @@ class System(ABC):
         t1: float = 6.0,
         dt: float = 1e-3,
         amplitude_voluntary: float = 1.0,
-        savedir: str = "results/runs"
+        savedir: str = "results/runs",
     ) -> None:
 
         # Model name
@@ -110,11 +111,7 @@ class System(ABC):
 
         # Time vector and sampling frequency
         self.fs: float = 1 / self.dt  # useful for many tremor estimators
-        self.t: np.ndarray = np.arange(
-            self.t0,
-            self.t1 + self.dt,
-            self.dt
-        )
+        self.t: np.ndarray = np.arange(self.t0, self.t1 + self.dt, self.dt)
 
         # Control signal history
         self.u: np.ndarray = np.zeros((len(self.t), 3))
@@ -146,6 +143,16 @@ class System(ABC):
         self._set_model()
 
         # Initializations of simulation-relevant attributes:
+        self._initialize_simulation_attributes()
+
+        # Results storage across runs
+        self.suffix: str = f"{self.name}_amplitude_{self.amplitude_voluntary}"
+        self.results: dict[str, RunResult] = {}
+
+        return
+
+    @final
+    def _initialize_simulation_attributes(self) -> None:
         self.u[0] = np.array([0.0, 0.0, 0.0])
         self.x[0] = np.array(self.ic)
         self.x_v[0] = np.array(self.ic)
@@ -155,29 +162,27 @@ class System(ABC):
         self.theta_i[0] = np.zeros(3)
         self.theta_i_hat[0] = np.zeros(3)
 
-        # Results storage across runs
-        self.suffix: str = f"{self.name}_amplitude_{self.amplitude_voluntary}"
-        self.results: dict[str, RunResult] = {}
-
-        return
-
     # Torque profiles (voluntary and involuntary)
     @final
     def _tau_v(self, t: float) -> np.ndarray:
-        return self.amplitude_voluntary * np.array([
-            np.cos(2 * np.pi * 0.1 * t),
-            np.cos(2 * np.pi * 0.2 * t),
-            np.cos(2 * np.pi * 0.3 * t),
-        ])
+        return self.amplitude_voluntary * np.array(
+            [
+                np.cos(2 * np.pi * 0.1 * t),
+                np.cos(2 * np.pi * 0.2 * t),
+                np.cos(2 * np.pi * 0.3 * t),
+            ]
+        )
 
     @final
     @staticmethod
     def _tau_i(t: float) -> np.ndarray:
-        return np.array([
-            np.cos(2 * np.pi * 3.58803 * t),
-            np.cos(2 * np.pi * 5.30097 * t),
-            np.cos(2 * np.pi * 14.34746 * t),
-        ])
+        return np.array(
+            [
+                np.cos(2 * np.pi * 3.58803 * t),
+                np.cos(2 * np.pi * 5.30097 * t),
+                np.cos(2 * np.pi * 14.34746 * t),
+            ]
+        )
 
     @final
     def simulate_system(self) -> None:
@@ -186,17 +191,23 @@ class System(ABC):
         __start = time.time()
 
         # State dynamics
-        def f_vol(t, x): return self.a @ x + self.b @ self._tau_v(t)
-        def f_all(t, x, u): return f_vol(t, x) + self.b @ (self._tau_i(t) + u)
+        def f_vol(t, x):
+            return self.a @ x + self.b @ self._tau_v(t)
+
+        def f_all(t, x, u):
+            return f_vol(t, x) + self.b @ (self._tau_i(t) + u)
 
         # 4th order Runge-Kutta with fixed time step
         for k, t in enumerate(self.t[1:], start=1):
-
             # Update k1 through k4 (Measured response)
-            k1 = f_all(t, self.x[k-1], self.u[k-1])
-            k2 = f_all(t + (self.dt / 2), self.x[k-1] + (self.dt * k1 / 2), self.u[k-1])  # noqa: E501
-            k3 = f_all(t + (self.dt / 2), self.x[k-1] + (self.dt * k2 / 2), self.u[k-1])  # noqa: E501
-            k4 = f_all(t + (self.dt), self.x[k-1] + (self.dt * k3), self.u[k-1])  # noqa: E501
+            k1 = f_all(t, self.x[k - 1], self.u[k - 1])
+            k2 = f_all(
+                t + (self.dt / 2), self.x[k - 1] + (self.dt * k1 / 2), self.u[k - 1]
+            )
+            k3 = f_all(
+                t + (self.dt / 2), self.x[k - 1] + (self.dt * k2 / 2), self.u[k - 1]
+            )
+            k4 = f_all(t + (self.dt), self.x[k - 1] + (self.dt * k3), self.u[k - 1])
 
             # Update state
             update = (self.dt / 6) * (k1 + (2 * k2) + (2 * k3) + k4)
@@ -206,10 +217,10 @@ class System(ABC):
             self.theta[k] = self.c_ss @ self.x[k]
 
             # Repeat Runge-Kutta process to obtain true voluntary response
-            k1 = f_vol(t, self.x_v[k-1])
-            k2 = f_vol(t + (self.dt / 2), self.x_v[k-1] + (self.dt * k1 / 2))
-            k3 = f_vol(t + (self.dt / 2), self.x_v[k-1] + (self.dt * k2 / 2))
-            k4 = f_vol(t + (self.dt), self.x_v[k-1] + (self.dt * k3))
+            k1 = f_vol(t, self.x_v[k - 1])
+            k2 = f_vol(t + (self.dt / 2), self.x_v[k - 1] + (self.dt * k1 / 2))
+            k3 = f_vol(t + (self.dt / 2), self.x_v[k - 1] + (self.dt * k2 / 2))
+            k4 = f_vol(t + (self.dt), self.x_v[k - 1] + (self.dt * k3))
 
             # Update voluntary state
             update_v = (self.dt / 6) * (k1 + (2 * k2) + (2 * k3) + k4)
@@ -233,7 +244,7 @@ class System(ABC):
         else:
             key = f"non_nominal_run_{len(self.results)}"
 
-        self.results[key]: RunResult = {
+        self.results[key] = {
             "time": self.t,
             "theta": self.theta,
             "theta_v": self.theta_v,
@@ -290,8 +301,7 @@ class System(ABC):
             + p.j3
             + p.m3 * (p.l1**2 + p.l2**2 + a3**2 + 2 * p.l2 * a3)
         )
-        j12 = (p.j2 + p.m2 * a2**2) + p.j3 + p.m3 * \
-            (p.l2**2 + a3**2 + 2 * p.l2 * a3)
+        j12 = (p.j2 + p.m2 * a2**2) + p.j3 + p.m3 * (p.l2**2 + a3**2 + 2 * p.l2 * a3)
         j13 = p.j3 + p.m3 * (a3**2 + p.l2 * a3)
 
         j21 = j12
@@ -302,21 +312,21 @@ class System(ABC):
         j32 = j13
         j33 = p.j3 + p.m3 * a3**2
 
-        self.j = np.array([
-            [j11, j12, j13],
-            [j21, j22, j23],
-            [j31, j32, j33]
-        ])
-        self.k = np.array([
-            [p.k1 + p.k3, p.k3, 0],
-            [p.k3, p.k2 + p.k3, 0],
-            [0, 0, p.k4],
-        ])
-        self.c = np.array([
-            [c1 + c3, c3, 0],
-            [c3, c2 + c3, 0],
-            [0, 0, c4],
-        ])
+        self.j = np.array([[j11, j12, j13], [j21, j22, j23], [j31, j32, j33]])
+        self.k = np.array(
+            [
+                [p.k1 + p.k3, p.k3, 0],
+                [p.k3, p.k2 + p.k3, 0],
+                [0, 0, p.k4],
+            ]
+        )
+        self.c = np.array(
+            [
+                [c1 + c3, c3, 0],
+                [c3, c2 + c3, 0],
+                [0, 0, c4],
+            ]
+        )
 
     @final
     def _set_state_space(self) -> None:
@@ -348,7 +358,7 @@ class System(ABC):
         self.params.k4 = rs.uniform(*self.params.stiffness_intervals["k4"])
         self._set_model()
 
-        # Restarts simulation-relevant attributes
+        # Clears simulation-relevant attributes
         self.u: np.ndarray = np.zeros((len(self.t), 3))
         self.x: np.ndarray = np.zeros((len(self.t), 6))
         self.x_v: np.ndarray = np.zeros((len(self.t), 6))
@@ -357,6 +367,9 @@ class System(ABC):
         self.theta_v_hat: np.ndarray = np.zeros((len(self.t), 3))
         self.theta_i: np.ndarray = np.zeros((len(self.t), 3))
         self.theta_i_hat: np.ndarray = np.zeros((len(self.t), 3))
+
+        # Initialize state and response for new run with initial conditions
+        self._initialize_simulation_attributes()
 
         # Resets any other control-specific attributes
         self._reset_control_variables()

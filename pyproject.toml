@@ -1,0 +1,14 @@
+[project]
+name = "eadrc-parkinson-suppression"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "blosc>=1.11.4",
+    "matplotlib>=3.11.1",
+    "openpyxl>=3.1.5",
+    "pandas>=3.0.5",
+    "pyyaml>=6.0.3",
+    "scipy>=1.18.1",
+]
